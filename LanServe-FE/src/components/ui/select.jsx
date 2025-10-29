@@ -1,0 +1,1 @@
+export default function Select({children, ...props}){ return <select {...props} className={['select', props.className].join(' ')}>{children}</select> }

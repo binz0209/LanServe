@@ -1,0 +1,119 @@
+############################################
+# OS chung
+############################################
+.DS_Store
+Thumbs.db
+desktop.ini
+
+############################################
+# IDE / Editor
+############################################
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.rsuser
+*.sln.docstates
+
+# Rider / ReSharper
+.idea/
+*.iml
+*.DotSettings.user
+_ReSharper.Caches/
+*_Resharper.*
+
+# VS Code (giữ lại 1 số file cấu hình dùng chung)
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+
+############################################
+# Build / Restore
+############################################
+**/bin/
+**/obj/
+**/out/
+artifacts/
+# NuGet
+*.nupkg
+*.snupkg
+packages/
+project.lock.json
+project.fragment.lock.json
+**/obj/project.assets.json
+**/obj/project.nuget.cache
+*.nuget.g.props
+*.nuget.g.targets
+
+############################################
+# Test / Coverage
+############################################
+TestResults/
+*.trx
+coverage/
+coverage*.json
+coverage*.xml
+coverage*.info
+*.coverage
+*.coveragexml
+
+############################################
+# Publish
+############################################
+publish/
+**/Properties/PublishProfiles/*.pubxml.user
+
+############################################
+# Logs
+############################################
+*.log
+logs/
+Serilog*.log
+
+############################################
+# Secrets / cấu hình cục bộ
+############################################
+# Khuyến nghị: commit appsettings.json (không chứa secrets)
+# và KHÔNG commit file .Local / .user
+**/appsettings.Local.json
+**/appsettings.*.Local.json
+**/appsettings.*.user.json
+# Không commit appsettings.json và appsettings.Development.json
+
+**/appsettings.Development.json
+# Nếu dùng biến môi trường:
+.env
+.env.*.local
+.env.local
+# User secrets file (ngoài repo thường không vào repo, thêm cho chắc)
+secrets.json
+# File *.csproj.user sinh theo máy dev
+*.csproj.user
+
+############################################
+# HTTP scratch (giữ *.http nếu muốn share request mẫu)
+############################################
+*.rest
+
+############################################
+# MongoDB data/dumps (local dev)
+############################################
+/data/
+data/db/
+dump/
+*.bson
+*.mongodump
+
+############################################
+# Tạp nham
+############################################
+*.bak
+*.tmp
+*.orig
+*.rej
+*.dbmdl
+*.mdf
+*.ldf
