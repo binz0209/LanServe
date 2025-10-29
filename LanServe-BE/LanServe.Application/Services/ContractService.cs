@@ -22,9 +22,6 @@ public class ContractService : IContractService
     public Task<IEnumerable<Contract>> GetByFreelancerIdAsync(string freelancerId)
         => _repo.GetByFreelancerIdAsync(freelancerId);
 
-    public Task<IEnumerable<Contract>> GetAllAsync()
-        => _repo.GetAllAsync();
-
     public Task<Contract> CreateAsync(Contract entity)
         => _repo.InsertAsync(entity);
 

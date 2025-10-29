@@ -2,8 +2,7 @@ import { useState } from "react";
 import Input from "../../components/ui/input";
 import Button from "../../components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
-import api from "../../lib/api";
-import { jwtDecode } from "jwt-decode";
+import api from "../../lib/axios";
 import { toast } from "sonner";
 import { GoogleLogin } from "@react-oauth/google";
 
@@ -21,47 +20,13 @@ export default function Register() {
     if (form.password !== form.confirm)
       return setErr("Mật khẩu xác nhận không khớp.");
     try {
-      const res = await api.post("/api/auth/register", {
+      const res = await api.post("/auth/register", {
         fullName: form.name,
         email: form.email,
         password: form.password,
         role: "User",
       });
-      
-      const token = res.data?.accessToken || res.data?.token;
-      if (!token) throw new Error("Không nhận được token từ server");
-
-      localStorage.setItem("token", token);
-      api.defaults.headers.common.Authorization = `Bearer ${token}`;
-
-      // Decode JWT để lấy thông tin user
-      const decoded = jwtDecode(token);
-      console.log("Decoded JWT (Register):", decoded);
-      
-      const userId =
-        decoded.sub ||
-        decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"] ||
-        decoded.userId;
-      
-      const email = decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"] ||
-                    decoded.email ||
-                    form.email;
-      
-      const role = decoded["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] ||
-                   decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/role"] ||
-                   decoded["role"] ||
-                   decoded.role ||
-                   "User";
-
-      // Lưu user object vào localStorage
-      const userData = {
-        id: userId,
-        email: email,
-        role: role
-      };
-      localStorage.setItem("user", JSON.stringify(userData));
-      console.log("UserData saved (Register):", userData);
-
+      localStorage.setItem("token", res.data.accessToken);
       toast.success("Đăng ký thành công!");
       nav("/account/profile");
     } catch (err) {
@@ -73,46 +38,13 @@ export default function Register() {
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
       const idToken = credentialResponse.credential;
-      const res = await api.post("/api/auth/google", { idToken });
-      
-      const token = res.data?.accessToken;
-      if (!token) throw new Error("Google login failed: No token");
-
-      localStorage.setItem("token", token);
-      api.defaults.headers.common.Authorization = `Bearer ${token}`;
-
-      // Decode JWT để lấy thông tin user
-      const decoded = jwtDecode(token);
-      console.log("Decoded JWT (Google Register):", decoded);
-      
-      const userId =
-        decoded.sub ||
-        decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"] ||
-        decoded.userId;
-      
-      const email = decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"] ||
-                    decoded.email;
-      
-      const role = decoded["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] ||
-                   decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/role"] ||
-                   decoded["role"] ||
-                   decoded.role ||
-                   "User";
-
-      // Lưu user object vào localStorage
-      const userData = {
-        id: userId,
-        email: email,
-        role: role
-      };
-      localStorage.setItem("user", JSON.stringify(userData));
-      console.log("UserData saved (Google Register):", userData);
-
+      const res = await api.post("/auth/google", { idToken });
+      localStorage.setItem("token", res.data.accessToken);
       toast.success("Đăng nhập bằng Google thành công!");
       nav("/account/profile");
     } catch (err) {
       console.error("Google login failed:", err);
-      toast.error(err.response?.data?.message || "Đăng nhập Google thất bại.");
+      toast.error("Đăng nhập Google thất bại.");
     }
   };
 

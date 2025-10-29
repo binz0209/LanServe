@@ -31,7 +31,4 @@ public class ContractsController : ControllerBase
 
     [Authorize(Roles = "Admin")]
     [HttpDelete("{id}")] public async Task<IActionResult> Delete(string id) => Ok(await _svc.DeleteAsync(id));
-
-    [Authorize(Roles = "Admin")]
-    [HttpGet] public async Task<IActionResult> GetAll() => Ok(await _svc.GetAllAsync());
 }

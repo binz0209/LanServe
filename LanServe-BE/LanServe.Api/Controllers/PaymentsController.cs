@@ -1,5 +1,4 @@
 ﻿using LanServe.Application.Interfaces.Services;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace LanServe.Api.Controllers;
@@ -47,10 +46,6 @@ public class PaymentsController : ControllerBase
 
         return Redirect(finalUrl);
     }
-
-    [Authorize(Roles = "Admin")]
-    [HttpGet]
-    public async Task<IActionResult> GetAll() => Ok(await _paymentService.GetAllAsync());
 
     public record TopupRequest(string UserId, decimal Amount);
 }

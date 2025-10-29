@@ -69,14 +69,7 @@ services.AddCors(opt =>
             "http://localhost:5173",
             "http://127.0.0.1:5173",
             "https://localhost:5173",
-            "https://127.0.0.1:5173",
-            "https://localhost:5174",
-            "https://127.0.0.1:5174",
-            "https://lanserve.vercel.app",
-            "https://lanserve-b8pdczhsq-binzdapoet0209-7462s-projects.vercel.app",
-            "https://lanserve-n9nw1kgam-binzdapoet0209-7462s-projects.vercel.app",
-            "https://lanserve-1egppvfb7-binzdapoet0209-7462s-projects.vercel.app",
-            "https://lanserve-fe-def2eaaah7cjbbc4.malaysiawest-01.azurewebsites.net"
+            "https://127.0.0.1:5173"
         // Nếu dùng IPv6 trên Windows:
         // "http://[::1]:5173", "https://[::1]:5173"
         )

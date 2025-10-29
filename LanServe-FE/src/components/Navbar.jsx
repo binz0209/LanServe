@@ -1,7 +1,7 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import Button from "./ui/button";
 import { jwtDecode } from "jwt-decode";
-import { MessageSquare, User, Wallet, Shield } from "lucide-react"; // 👈 thêm Shield icon
+import { MessageSquare, User, Wallet } from "lucide-react"; // 👈 thêm Wallet icon
 import { useEffect } from "react";
 import { useWalletStore } from "../stores/walletStore";       // 👈 import store
 
@@ -25,16 +25,9 @@ export default function Navbar() {
 
   const { balance, fetchBalance, loading } = useWalletStore();
 
-  // Tạm thời bỏ qua fetch wallet để tránh lỗi 404
-  // useEffect(() => {
-  //   if (userId) fetchBalance(userId);
-  // }, [userId, fetchBalance]);
-
-  // Check if user is Admin (case-insensitive)
-  const user = JSON.parse(localStorage.getItem("user") || "null");
-  const isAdmin = user?.role?.toLowerCase() === "admin";
-
-  // Log user info for debugging
+  useEffect(() => {
+    if (userId) fetchBalance(userId);
+  }, [userId, fetchBalance]);
 
   const item = "px-3 py-2 rounded-lg hover:bg-slate-100 text-sm flex items-center gap-1";
   const linkClass = ({ isActive }) =>
@@ -90,11 +83,6 @@ export default function Navbar() {
               >
                 <User className="w-5 h-5" /> Tài khoản
               </NavLink>
-              {isAdmin && (
-                <NavLink to="/admin" className={linkClass}>
-                  <Shield className="w-5 h-5" /> Admin
-                </NavLink>
-              )}
               <Button onClick={onLogout}>Đăng xuất</Button>
             </>
           ) : (
