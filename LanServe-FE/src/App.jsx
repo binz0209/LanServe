@@ -34,25 +34,29 @@ import AdminSettings from "./pages/admin/Settings";
 
 // Chặn route khi chưa login (đọc trực tiếp localStorage)
 function PrivateRoute({ children }) {
-  const token = localStorage.getItem("token");
+  const token =
+    localStorage.getItem("token") || sessionStorage.getItem("token");
   return token ? children : <Navigate to="/login" replace />;
 }
 
 // Chặn route admin - chỉ admin mới vào được (case-insensitive)
 function AdminOnly({ children }) {
-  const token = localStorage.getItem("token");
-  const user = JSON.parse(localStorage.getItem("user") || "null");
-  
+  const token =
+    localStorage.getItem("token") || sessionStorage.getItem("token");
+  const user = JSON.parse(
+    localStorage.getItem("user") || sessionStorage.getItem("user") || "null"
+  );
+
   if (!token) return <Navigate to="/login" replace />;
-  // Check case-insensitive
   if (user?.role?.toLowerCase() !== "admin") return <Navigate to="/" replace />;
-  
+
   return children;
 }
 
 // Chặn route khi đã login
 function GuestOnly({ children }) {
-  const token = localStorage.getItem("token");
+  const token =
+    localStorage.getItem("token") || sessionStorage.getItem("token");
   return token ? <Navigate to="/" replace /> : children;
 }
 
@@ -119,7 +123,7 @@ export default function App() {
             <Route path="portfolio" element={<Portfolio />} />
             <Route path="reviews" element={<Reviews />} />
           </Route>
-          
+
           {/* Admin Routes */}
           <Route
             path="/admin"

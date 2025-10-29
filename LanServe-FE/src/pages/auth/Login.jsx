@@ -7,10 +7,15 @@ import { jwtDecode } from "jwt-decode";
 import { GoogleLogin } from "@react-oauth/google";
 import { toast } from "sonner";
 
-
 export default function Login() {
   const nav = useNavigate();
-  const [form, setForm] = useState({ email: "", password: "" });
+
+  // ✅ Thêm rememberMe trong state form
+  const [form, setForm] = useState({
+    email: "",
+    password: "",
+    rememberMe: false,
+  });
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -20,66 +25,84 @@ export default function Login() {
   const [code, setCode] = useState("");
   const [newPassword, setNewPassword] = useState("");
 
-
-
   const onSubmit = async (e) => {
     e.preventDefault();
-    if (!form.email || !form.password) return setErr("Vui lòng nhập đủ thông tin.");
+    if (!form.email || !form.password)
+      return setErr("Vui lòng nhập đủ thông tin.");
 
     setErr("");
     setLoading(true);
     try {
-      const res = await api.post("/api/auth/login", form);
+      // ✅ Gửi rememberMe lên server
+      const res = await api.post("/api/auth/login", {
+        email: form.email,
+        password: form.password,
+        rememberMe: form.rememberMe,
+      });
+
       const token = res.data?.accessToken || res.data?.token;
       if (!token) throw new Error("Không nhận được token từ server");
 
-      // Lưu token
-      localStorage.setItem("token", token);
+      // ✅ Lưu token theo lựa chọn Remember Me
+      if (form.rememberMe) {
+        localStorage.setItem("token", token);
+      } else {
+        sessionStorage.setItem("token", token);
+      }
 
       // Gắn header mặc định ngay lập tức cho các request sau login
       api.defaults.headers.common.Authorization = `Bearer ${token}`;
 
       // Decode JWT để lấy thông tin user
       const decoded = jwtDecode(token);
-      
-      // Log để debug - log tất cả claims
+
       console.log("=== DECODED JWT ===");
       console.log(JSON.stringify(decoded, null, 2));
-      console.log("All keys:", Object.keys(decoded));
-      
+
       const userId =
         decoded.sub ||
-        decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"] ||
-        decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier".toLowerCase()] ||
+        decoded[
+          "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"
+        ] ||
+        decoded[
+          "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier".toLowerCase()
+        ] ||
         decoded.userId ||
         null;
-      
-      const email = decoded.email ||
-                    decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"] ||
-                    decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress".toLowerCase()] ||
-                    form.email;
-      
-      // Check ALL possible role claim names (log để debug)
-      console.log("Decoded email:", decoded.email);
-      console.log("Decoded role:", decoded.role);
-      console.log("Checking all keys for role...");
-      
-      const role = decoded["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] ||
-                   decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/role"] ||
-                   decoded.role ||
-                   decoded.role?.toString() ||
-                   "User";
 
-      // Lưu user object vào localStorage
+      const email =
+        decoded.email ||
+        decoded[
+          "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"
+        ] ||
+        decoded[
+          "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress".toLowerCase()
+        ] ||
+        form.email;
+
+      const role =
+        decoded[
+          "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
+        ] ||
+        decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/role"] ||
+        decoded.role ||
+        decoded.role?.toString() ||
+        "User";
+
       const userData = {
         id: userId,
         email: email,
-        role: role
+        role: role,
       };
-      localStorage.setItem("user", JSON.stringify(userData));
+
+      // ✅ Lưu user theo rememberMe
+      if (form.rememberMe) {
+        localStorage.setItem("user", JSON.stringify(userData));
+      } else {
+        sessionStorage.setItem("user", JSON.stringify(userData));
+      }
 
       console.log("UserData saved:", userData);
-      // Điều hướng
       nav("/", { replace: true });
     } catch (error) {
       console.error("Login error:", error);
@@ -96,7 +119,7 @@ export default function Login() {
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
       const idToken = credentialResponse.credential;
-      const res = await api.post("/api/auth/google", { idToken }); // sửa route cho đúng
+      const res = await api.post("/api/auth/google", { idToken });
 
       const token = res.data?.accessToken;
       if (!token) throw new Error("Google login failed: No token");
@@ -104,30 +127,36 @@ export default function Login() {
       localStorage.setItem("token", token);
       api.defaults.headers.common.Authorization = `Bearer ${token}`;
 
-      // Decode JWT để lấy thông tin user
       const decoded = jwtDecode(token);
       console.log("Decoded JWT (Google):", decoded);
-      
+
       const userId =
         decoded.sub ||
-        decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"] ||
+        decoded[
+          "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"
+        ] ||
         decoded.userId;
-      
-      const email = decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"] ||
-                    decoded.email;
-      
-      const role = decoded["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] ||
-                   decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/role"] ||
-                   decoded["role"] ||
-                   decoded.role ||
-                   "User";
 
-      // Lưu user object vào localStorage
+      const email =
+        decoded[
+          "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"
+        ] || decoded.email;
+
+      const role =
+        decoded[
+          "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
+        ] ||
+        decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/role"] ||
+        decoded["role"] ||
+        decoded.role ||
+        "User";
+
       const userData = {
         id: userId,
         email: email,
-        role: role
+        role: role,
       };
+
       localStorage.setItem("user", JSON.stringify(userData));
       console.log("UserData saved (Google):", userData);
 
@@ -151,7 +180,8 @@ export default function Login() {
   };
 
   const handleResetPassword = async () => {
-    if (!code || !newPassword) return toast.error("Vui lòng nhập đầy đủ thông tin.");
+    if (!code || !newPassword)
+      return toast.error("Vui lòng nhập đầy đủ thông tin.");
     try {
       await api.post("/api/auth/reset-password", { email, code, newPassword });
       toast.success("Đặt lại mật khẩu thành công!");
@@ -165,12 +195,13 @@ export default function Login() {
     }
   };
 
-
   return (
     <div className="container-ld py-12 grid md:grid-cols-2 gap-10">
       <div className="hidden md:block">
         <div className="h-80 rounded-2xl bg-gradient-to-br from-blue-200 to-orange-200" />
-        <h2 className="mt-6 text-2xl font-semibold">Chào mừng trở lại LanServe</h2>
+        <h2 className="mt-6 text-2xl font-semibold">
+          Chào mừng trở lại LanServe
+        </h2>
         <p className="text-slate-600 mt-2">
           Đăng nhập để quản lý dự án, trao đổi và nhận việc nhanh chóng.
         </p>
@@ -198,9 +229,18 @@ export default function Login() {
               onChange={(e) => setForm({ ...form, password: e.target.value })}
             />
           </div>
+
           <div className="flex items-center justify-between text-sm">
             <label className="flex items-center gap-2">
-              <input type="checkbox" /> Ghi nhớ đăng nhập
+              {/* ✅ Checkbox Remember Me */}
+              <input
+                type="checkbox"
+                checked={form.rememberMe}
+                onChange={(e) =>
+                  setForm({ ...form, rememberMe: e.target.checked })
+                }
+              />
+              Ghi nhớ đăng nhập
             </label>
             <button
               type="button"
@@ -209,17 +249,19 @@ export default function Login() {
             >
               Quên mật khẩu?
             </button>
-
           </div>
+
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? "Đang đăng nhập..." : "Đăng nhập"}
           </Button>
+
           <div className="flex justify-center mt-4">
             <GoogleLogin
               onSuccess={handleGoogleSuccess}
               onError={() => toast.error("Google Login thất bại")}
             />
           </div>
+
           <div className="text-sm text-center text-slate-600">
             Chưa có tài khoản?{" "}
             <Link to="/register" className="text-brand-700 hover:underline">
@@ -247,7 +289,10 @@ export default function Login() {
                   onChange={(e) => setEmail(e.target.value)}
                 />
                 <div className="flex justify-end gap-2 mt-4">
-                  <Button variant="outline" onClick={() => setShowForgot(false)}>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowForgot(false)}
+                  >
                     Hủy
                   </Button>
                   <Button onClick={handleSendCode}>Gửi mã</Button>
@@ -267,7 +312,10 @@ export default function Login() {
                   onChange={(e) => setNewPassword(e.target.value)}
                 />
                 <div className="flex justify-end gap-2 mt-4">
-                  <Button variant="outline" onClick={() => setShowForgot(false)}>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowForgot(false)}
+                  >
                     Hủy
                   </Button>
                   <Button onClick={handleResetPassword}>Đổi mật khẩu</Button>

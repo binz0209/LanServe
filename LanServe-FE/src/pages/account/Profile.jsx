@@ -16,7 +16,8 @@ export default function Profile() {
   const { userId: viewedUserId } = useParams(); // 👈 nếu có userId => đang xem người khác
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    const token =
+      localStorage.getItem("token") || sessionStorage.getItem("token");
     let currentUserId = null;
 
     if (token) {

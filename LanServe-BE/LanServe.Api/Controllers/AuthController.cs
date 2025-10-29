@@ -13,13 +13,17 @@ public class AuthController : ControllerBase
 {
     private readonly IUserService _users;
     private readonly IJwtTokenService _jwt;
+
     public AuthController(IUserService users, IJwtTokenService jwt)
     {
-        _users = users; _jwt = jwt;
+        _users = users;
+        _jwt = jwt;
     }
 
     public record RegisterRequest(string FullName, string Email, string Password, string Role = "User");
-    public record LoginRequest(string Email, string Password);
+
+    // ✅ Cập nhật LoginRequest để có RememberMe
+    public record LoginRequest(string Email, string Password, bool RememberMe = false);
 
     [AllowAnonymous]
     [HttpPost("register")]
@@ -42,8 +46,12 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> Login([FromBody] LoginRequest req)
     {
         var user = await _users.ValidateUserAsync(req.Email, req.Password);
-        if (user is null) return Unauthorized(new { message = "Invalid credentials" });
-        var (token, exp) = _jwt.GenerateToken(user.Id, user.Email, user.Role);
+        if (user is null)
+            return Unauthorized(new { message = "Invalid credentials" });
+
+        // ✅ Gọi GenerateToken với RememberMe
+        var (token, exp) = _jwt.GenerateToken(user.Id, user.Email, user.Role, req.RememberMe);
+
         return Ok(new { accessToken = token, expiresIn = exp });
     }
 
@@ -64,6 +72,8 @@ public class AuthController : ControllerBase
                     "User"
                 );
             }
+
+            // Google login không cần RememberMe — vẫn dùng TTL mặc định
             var (token, exp) = _jwt.GenerateToken(user.Id, user.Email, user.Role);
             return Ok(new { accessToken = token, expiresIn = exp });
         }
@@ -91,13 +101,12 @@ public class AuthController : ControllerBase
         var code = new Random().Next(100000, 999999).ToString();
         _resetCodes[req.Email] = (code, DateTime.UtcNow.AddMinutes(10));
 
-        // Gửi email (cấu hình SMTP thật ở đây)
         try
         {
             using var smtp = new SmtpClient("smtp.gmail.com")
             {
                 Port = 587,
-                Credentials = new NetworkCredential("pvapro123@gmail.com", "jtkx dauy cdmt mysg"), // dùng App Password
+                Credentials = new NetworkCredential("pvapro123@gmail.com", "jtkx dauy cdmt mysg"), // App password Gmail
                 EnableSsl = true
             };
 
@@ -118,7 +127,6 @@ public class AuthController : ControllerBase
         return Ok(new { message = "Mã xác thực đã được gửi về email." });
     }
 
-
     [AllowAnonymous]
     [HttpPost("reset-password")]
     public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest req)
@@ -135,7 +143,6 @@ public class AuthController : ControllerBase
         if (data.Code != req.Code)
             return BadRequest(new { message = "Mã xác thực không đúng." });
 
-        // Đặt lại mật khẩu
         var user = await _users.GetByEmailAsync(req.Email);
         if (user == null)
             return NotFound(new { message = "Không tìm thấy người dùng." });

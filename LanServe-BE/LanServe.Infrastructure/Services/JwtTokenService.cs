@@ -16,12 +16,17 @@ public class JwtTokenService : IJwtTokenService
         _config = config;
     }
 
-    public (string accessToken, int expiresIn) GenerateToken(string userId, string email, string role)
+    // ✅ thêm tham số rememberMe
+    public (string accessToken, int expiresIn) GenerateToken(string userId, string email, string role, bool rememberMe = false)
     {
         var key = _config["Jwt:Key"];
         var issuer = _config["Jwt:Issuer"] ?? "LanServe";
         var audience = _config["Jwt:Audience"] ?? "LanServeClient";
-        var expires = DateTime.UtcNow.AddHours(2);
+
+        // ✅ thay đổi thời gian hết hạn dựa trên RememberMe
+        var expires = rememberMe
+            ? DateTime.UtcNow.AddDays(7)   // 7 ngày
+            : DateTime.UtcNow.AddMinutes(5); // 1 giờ mặc định
 
         var claims = new[]
         {

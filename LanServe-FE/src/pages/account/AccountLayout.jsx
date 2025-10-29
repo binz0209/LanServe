@@ -13,7 +13,8 @@ export default function AccountLayout() {
   const params = useParams(); // 👈 để nhận userId nếu có
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    const token =
+      localStorage.getItem("token") || sessionStorage.getItem("token");
     if (!token) return;
 
     const decoded = jwtDecode(token);
@@ -27,7 +28,7 @@ export default function AccountLayout() {
 
     // 👇 tải profile của user được xem (có thể là mình hoặc người khác)
     axios
-      .get(`/api/userprofiles/by-user/${viewedUserId}`)
+      .get(`api/userprofiles/by-user/${viewedUserId}`)
       .then((res) => {
         setProfile((prev) => ({ ...(prev || {}), ...res.data }));
         setIsOwner(viewedUserId === currentUserId);
@@ -37,7 +38,7 @@ export default function AccountLayout() {
     // 👇 nếu là hồ sơ của mình mới lấy fullName riêng
     if (viewedUserId === currentUserId) {
       axios
-        .get("/api/users/me")
+        .get("api/users/me")
         .then((res) => {
           const fullName = res.data?.fullName ?? res.data?.name ?? "";
           setProfile((prev) => ({ ...(prev || {}), fullName }));
@@ -46,7 +47,7 @@ export default function AccountLayout() {
     } else {
       // 👇 nếu là người khác thì lấy tên qua API /users/:id
       axios
-        .get(`/api/users/${viewedUserId}`)
+        .get(`api/users/${viewedUserId}`)
         .then((res) => {
           const fullName = res.data?.fullName ?? res.data?.name ?? "";
           setProfile((prev) => ({ ...(prev || {}), fullName }));
@@ -56,7 +57,7 @@ export default function AccountLayout() {
 
     // 👇 lấy đánh giá của user được xem
     axios
-      .get(`/api/reviews/by-user/${viewedUserId}`)
+      .get(`api/reviews/by-user/${viewedUserId}`)
       .then((res) => {
         const reviews = res.data || [];
         if (reviews.length > 0) {

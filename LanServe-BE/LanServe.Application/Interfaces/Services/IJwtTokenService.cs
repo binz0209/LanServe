@@ -1,6 +1,8 @@
-﻿namespace LanServe.Application.Interfaces.Services;
-
-public interface IJwtTokenService
+﻿namespace LanServe.Application.Interfaces.Services
 {
-    (string accessToken, int expiresIn) GenerateToken(string userId, string email, string role);
+    public interface IJwtTokenService
+    {
+        // ✅ Thêm tham số rememberMe tùy chọn
+        (string accessToken, int expiresIn) GenerateToken(string userId, string email, string role, bool rememberMe = false);
+    }
 }

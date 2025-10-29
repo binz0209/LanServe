@@ -11,10 +11,10 @@ export default function Projects() {
   const [projects, setProjects] = useState([]);
   const [statsBase, setStatsBase] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [skills, setSkills] = useState([]);              // skills từ DB
+  const [skills, setSkills] = useState([]); // skills từ DB
   const [currentUserId, setCurrentUserId] = useState(null);
 
-  const [editing, setEditing] = useState(null);          // { ...project, skillIds: [] } | null
+  const [editing, setEditing] = useState(null); // { ...project, skillIds: [] } | null
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState({});
   const [apiError, setApiError] = useState("");
@@ -39,7 +39,9 @@ export default function Projects() {
       const dec = jwtDecode(token);
       const id =
         dec.sub ||
-        dec["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"] ||
+        dec[
+          "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"
+        ] ||
         dec.userId ||
         null;
       const name =
@@ -81,8 +83,6 @@ export default function Projects() {
     );
   }, [projects, filterCategory, searchText, sortOrder]);
 
-
-
   function removeDiacritics(str) {
     return str
       .normalize("NFD")
@@ -92,27 +92,35 @@ export default function Projects() {
 
   // ===== categories & skills =====
   useEffect(() => {
-    axios.get("categories").then(r => setCategories(r.data || [])).catch(e => console.error(e));
-    axios.get("skills").then(r => setSkills(r.data || [])).catch(e => console.error("Skills error:", e));
+    axios
+      .get("api/categories")
+      .then((r) => setCategories(r.data || []))
+      .catch((e) => console.error(e));
+    axios
+      .get("api/skills")
+      .then((r) => setSkills(r.data || []))
+      .catch((e) => console.error("Skills error:", e));
   }, []);
 
   // ===== stats base (ALL) =====
   useEffect(() => {
-    axios.get("projects")
-      .then(res => setStatsBase(res.data || []))
-      .catch(err => console.error("Load all projects for stats error:", err));
+    axios
+      .get("api/projects")
+      .then((res) => setStatsBase(res.data || []))
+      .catch((err) => console.error("Load all projects for stats error:", err));
   }, []);
 
   // ===== load theo filter =====
   useEffect(() => {
     setLoading(true);
     let req;
-    if (activeFilter === "ALL") req = axios.get("projects");
-    else if (activeFilter === "Open") req = axios.get("projects/open");
+    if (activeFilter === "ALL") req = axios.get("api/projects");
+    else if (activeFilter === "Open") req = axios.get("api/projects/open");
     else req = axios.get(`projects/status/${activeFilter}`);
 
-    req.then(res => setProjects(res.data || []))
-      .catch(err => console.error("Load projects error:", err))
+    req
+      .then((res) => setProjects(res.data || []))
+      .catch((err) => console.error("Load projects error:", err))
       .finally(() => setLoading(false));
   }, [activeFilter]);
 
@@ -189,7 +197,10 @@ export default function Projects() {
     const e = {};
     if (!editing.title?.trim()) e.title = "Vui lòng nhập tiêu đề";
     if (!editing.description?.trim()) e.description = "Vui lòng nhập mô tả";
-    if (Number.isNaN(Number(editing.budgetAmount)) || Number(editing.budgetAmount) < 0) {
+    if (
+      Number.isNaN(Number(editing.budgetAmount)) ||
+      Number(editing.budgetAmount) < 0
+    ) {
       e.budgetAmount = "Ngân sách không hợp lệ";
     }
     if (!editing.categoryId) e.categoryId = "Vui lòng chọn danh mục";
@@ -217,13 +228,13 @@ export default function Projects() {
           status: editing.status,
           categoryId: editing.categoryId,
         };
-        const res = await axios.post("projects", payloadCreate); // POST /api/projects
+        const res = await axios.post("api/projects", payloadCreate); // POST /api/projects
         savedProject = res.data ?? payloadCreate;
 
         // đồng bộ skills
         if (Array.isArray(editing.skillIds)) {
           try {
-            await axios.post("projectskills/sync", {
+            await axios.post("api/projectskills/sync", {
               projectId: editing.id || savedProject.id,
               skillIds: editing.skillIds || [],
             });
@@ -232,9 +243,11 @@ export default function Projects() {
             savedProject.skillIds = editing.skillIds || [];
             savedProject.skillNames = namesFromIds(savedProject.skillIds);
           } catch (syncErr) {
-            console.warn("Sync project skills warning:", syncErr?.response || syncErr);
+            console.warn(
+              "Sync project skills warning:",
+              syncErr?.response || syncErr
+            );
           }
-
         }
 
         // cập nhật UI
@@ -252,22 +265,32 @@ export default function Projects() {
           categoryId: editing.categoryId,
           updatedAt: new Date().toISOString(),
         };
-        const res = await axios.put(`projects/${editing.id}`, payloadUpdate);
+        const res = await axios.put(
+          `api/projects/${editing.id}`,
+          payloadUpdate
+        );
         savedProject = res.data ?? payloadUpdate;
 
         try {
-          await axios.post("projectskills/sync", {
+          await axios.post("api/projectskills/sync", {
             projectId: editing.id,
             skillIds: editing.skillIds || [],
           });
           savedProject.skillIds = editing.skillIds || [];
           savedProject.skillNames = namesFromIds(savedProject.skillIds);
         } catch (syncErr) {
-          console.warn("Sync project skills (update) warning:", syncErr?.response || syncErr);
+          console.warn(
+            "Sync project skills (update) warning:",
+            syncErr?.response || syncErr
+          );
         }
 
-        setProjects((prev) => prev.map((p) => (p.id === editing.id ? { ...p, ...savedProject } : p)));
-        setStatsBase((prev) => prev.map((p) => (p.id === editing.id ? { ...p, ...savedProject } : p)));
+        setProjects((prev) =>
+          prev.map((p) => (p.id === editing.id ? { ...p, ...savedProject } : p))
+        );
+        setStatsBase((prev) =>
+          prev.map((p) => (p.id === editing.id ? { ...p, ...savedProject } : p))
+        );
       }
 
       closeEdit();
@@ -288,7 +311,9 @@ export default function Projects() {
   // ===== View modal helpers =====
   const openView = (p) => {
     const isIds = Array.isArray(p.skillIds) && p.skillIds.length > 0;
-    const resolvedSkills = isIds ? namesFromIds(p.skillIds) : (p.skillNames || []);
+    const resolvedSkills = isIds
+      ? namesFromIds(p.skillIds)
+      : p.skillNames || [];
     setViewing({
       ...p,
       resolvedSkills,
@@ -299,10 +324,16 @@ export default function Projects() {
   const closeView = () => setViewing(null);
 
   const countOpen = statsBase.filter((p) => p.status === "Open").length;
-  const countInProgress = statsBase.filter((p) => p.status === "InProgress").length;
-  const countCompleted = statsBase.filter((p) => p.status === "Completed").length;
+  const countInProgress = statsBase.filter(
+    (p) => p.status === "InProgress"
+  ).length;
+  const countCompleted = statsBase.filter(
+    (p) => p.status === "Completed"
+  ).length;
   const totalBudget =
-    (statsBase.reduce((sum, p) => sum + (p.budgetAmount || 0), 0).toLocaleString("vi-VN") || "0") + " đ";
+    (statsBase
+      .reduce((sum, p) => sum + (p.budgetAmount || 0), 0)
+      .toLocaleString("vi-VN") || "0") + " đ";
 
   return (
     <div className="container-ld py-8 space-y-6">
@@ -350,16 +381,44 @@ export default function Projects() {
 
       {/* Filters clickable */}
       <div className="grid md:grid-cols-5 gap-4">
-        <div role="button" onClick={() => setActiveFilter("ALL")} className={`transition rounded-xl ${activeFilter === "ALL" ? "ring-2 ring-brand-500" : ""}`}>
+        <div
+          role="button"
+          onClick={() => setActiveFilter("ALL")}
+          className={`transition rounded-xl ${
+            activeFilter === "ALL" ? "ring-2 ring-brand-500" : ""
+          }`}
+        >
           <StatCard icon={"📦"} label="Tổng dự án" value={statsBase.length} />
         </div>
-        <div role="button" onClick={() => setActiveFilter("Open")} className={`transition rounded-xl ${activeFilter === "Open" ? "ring-2 ring-brand-500" : ""}`}>
+        <div
+          role="button"
+          onClick={() => setActiveFilter("Open")}
+          className={`transition rounded-xl ${
+            activeFilter === "Open" ? "ring-2 ring-brand-500" : ""
+          }`}
+        >
           <StatCard icon={"🟢"} label="Đang mở" value={countOpen} />
         </div>
-        <div role="button" onClick={() => setActiveFilter("InProgress")} className={`transition rounded-xl ${activeFilter === "InProgress" ? "ring-2 ring-brand-500" : ""}`}>
-          <StatCard icon={"⏳"} label="Đang thực hiện" value={countInProgress} />
+        <div
+          role="button"
+          onClick={() => setActiveFilter("InProgress")}
+          className={`transition rounded-xl ${
+            activeFilter === "InProgress" ? "ring-2 ring-brand-500" : ""
+          }`}
+        >
+          <StatCard
+            icon={"⏳"}
+            label="Đang thực hiện"
+            value={countInProgress}
+          />
         </div>
-        <div role="button" onClick={() => setActiveFilter("Completed")} className={`transition rounded-xl ${activeFilter === "Completed" ? "ring-2 ring-brand-500" : ""}`}>
+        <div
+          role="button"
+          onClick={() => setActiveFilter("Completed")}
+          className={`transition rounded-xl ${
+            activeFilter === "Completed" ? "ring-2 ring-brand-500" : ""
+          }`}
+        >
           <StatCard icon={"✅"} label="Hoàn thành" value={countCompleted} />
         </div>
         <StatCard icon={"💰"} label="Tổng ngân sách" value={totalBudget} />
@@ -376,14 +435,16 @@ export default function Projects() {
           const shownSkills =
             Array.isArray(p.skillIds) && p.skillIds.length
               ? namesFromIds(p.skillIds)
-              : (p.skillNames || []);
+              : p.skillNames || [];
           return (
             <div key={p.id} className="card">
               <div className="card-body">
                 <div className="flex items-start justify-between">
                   <div>
                     <div className="text-lg font-semibold">{p.title}</div>
-                    <div className="mt-1 text-sm text-slate-500">{p.description}</div>
+                    <div className="mt-1 text-sm text-slate-500">
+                      {p.description}
+                    </div>
                     <div className="mt-2 flex gap-2 flex-wrap">
                       <span className="badge">{catName(p.categoryId)}</span>
                       {shownSkills.slice(0, 6).map((s) => (
@@ -394,7 +455,9 @@ export default function Projects() {
                     </div>
                   </div>
                   <div className="text-right min-w-[140px]">
-                    <div className="text-xs uppercase tracking-wide text-slate-500">Ngân sách</div>
+                    <div className="text-xs uppercase tracking-wide text-slate-500">
+                      Ngân sách
+                    </div>
                     <div className="text-brand-700 font-semibold">
                       {p.budgetAmount?.toLocaleString("vi-VN") ?? "—"} đ
                     </div>
@@ -404,27 +467,35 @@ export default function Projects() {
                   <div className="flex items-center gap-2">
                     <span>Trạng thái:</span>
                     <span
-                      className={`font-semibold ${p.status === "Open"
-                        ? "text-green-600"
-                        : p.status === "InProgress"
+                      className={`font-semibold ${
+                        p.status === "Open"
+                          ? "text-green-600"
+                          : p.status === "InProgress"
                           ? "text-blue-600"
                           : p.status === "Completed"
-                            ? "text-gray-600"
-                            : "text-red-600"
-                        }`}
+                          ? "text-gray-600"
+                          : "text-red-600"
+                      }`}
                     >
                       {p.status}
                     </span>
                   </div>
                   <div className="text-xs text-slate-500">
-                    Đăng lúc: {p.createdAt ? new Date(p.createdAt).toLocaleString("vi-VN") : "—"}
+                    Đăng lúc:{" "}
+                    {p.createdAt
+                      ? new Date(p.createdAt).toLocaleString("vi-VN")
+                      : "—"}
                   </div>
                 </div>
 
                 <div className="mt-4 flex gap-2">
-                  <Button variant="outline" onClick={() => openView(p)}>Xem</Button>
+                  <Button variant="outline" onClick={() => openView(p)}>
+                    Xem
+                  </Button>
                   {isOwner ? (
-                    <Button variant="outline" onClick={() => startEdit(p)}>Chỉnh sửa</Button>
+                    <Button variant="outline" onClick={() => startEdit(p)}>
+                      Chỉnh sửa
+                    </Button>
                   ) : (
                     p.status === "Open" && (
                       <Button
@@ -454,19 +525,22 @@ export default function Projects() {
           />
           <div className="fixed left-1/2 top-1/2 z-50 w-[min(96vw,480px)] -translate-x-1/2 -translate-y-1/2">
             <div className="rounded-2xl bg-white shadow-2xl border border-slate-200">
-
               {/* Header */}
               <div className="p-4 border-b flex items-center justify-between">
                 <div className="font-semibold">Ứng tuyển dự án</div>
                 <button
                   className="btn btn-sm btn-ghost"
                   onClick={() => setConfirmJob(null)}
-                >✕</button>
+                >
+                  ✕
+                </button>
               </div>
 
               {/* Body */}
               <div className="p-5 space-y-4">
-                <p>Bạn đang ứng tuyển vào dự án <b>{confirmJob.title}</b></p>
+                <p>
+                  Bạn đang ứng tuyển vào dự án <b>{confirmJob.title}</b>
+                </p>
 
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Cover Letter</label>
@@ -475,7 +549,10 @@ export default function Projects() {
                     rows={3}
                     value={confirmJob.coverLetter || ""}
                     onChange={(e) =>
-                      setConfirmJob({ ...confirmJob, coverLetter: e.target.value })
+                      setConfirmJob({
+                        ...confirmJob,
+                        coverLetter: e.target.value,
+                      })
                     }
                     placeholder="Viết vài dòng giới thiệu về bạn..."
                   />
@@ -488,46 +565,61 @@ export default function Projects() {
                     className="input input-bordered w-full"
                     value={confirmJob.bidAmount || ""}
                     onChange={(e) =>
-                      setConfirmJob({ ...confirmJob, bidAmount: e.target.value })
+                      setConfirmJob({
+                        ...confirmJob,
+                        bidAmount: e.target.value,
+                      })
                     }
-                    placeholder={`Theo budget của dự án: ${confirmJob.budgetAmount || "0"}$`}
+                    placeholder={`Theo budget của dự án: ${
+                      confirmJob.budgetAmount || "0"
+                    }$`}
                   />
                 </div>
               </div>
 
               {/* Footer */}
               <div className="p-4 border-t flex items-center justify-end gap-2">
-                <Button variant="outline" onClick={() => setConfirmJob(null)}>Hủy</Button>
+                <Button variant="outline" onClick={() => setConfirmJob(null)}>
+                  Hủy
+                </Button>
                 <Button
                   onClick={async () => {
                     try {
-                      const cover = (confirmJob.coverLetter || "").trim()
-                        || "Tôi quan tâm đến dự án này và muốn ứng tuyển.";
+                      const cover =
+                        (confirmJob.coverLetter || "").trim() ||
+                        "Tôi quan tâm đến dự án này và muốn ứng tuyển.";
 
                       // nếu bỏ trống bid -> theo budgetAmount của project
-                      const numericBid = confirmJob.bidAmount === "" || confirmJob.bidAmount == null
-                        ? (confirmJob.budgetAmount ?? null)
-                        : Number(confirmJob.bidAmount);
+                      const numericBid =
+                        confirmJob.bidAmount === "" ||
+                        confirmJob.bidAmount == null
+                          ? confirmJob.budgetAmount ?? null
+                          : Number(confirmJob.bidAmount);
 
-                      const bid = Number.isFinite(numericBid) && numericBid > 0
-                        ? numericBid
-                        : (confirmJob.budgetAmount ?? null);
+                      const bid =
+                        Number.isFinite(numericBid) && numericBid > 0
+                          ? numericBid
+                          : confirmJob.budgetAmount ?? null;
 
                       // 1) Tạo proposal
                       const proposalPayload = {
                         projectId: confirmJob.id || confirmJob._id,
                         freelancerId: currentUserId,
                         coverLetter: cover,
-                        bidAmount: bid,         // có thể null -> BE hiểu là theo budget
+                        bidAmount: bid, // có thể null -> BE hiểu là theo budget
                         status: "Pending",
-                        createdAt: new Date().toISOString()
+                        createdAt: new Date().toISOString(),
                       };
                       console.log("Proposal payload:", proposalPayload);
 
-                      const { data: createdProposal } = await axios.post("proposals", proposalPayload);
+                      const { data: createdProposal } = await axios.post(
+                        "api/proposals",
+                        proposalPayload
+                      );
 
                       // ID trả về có thể là id hoặc Id tuỳ config JSON
-                      const createdProposalId = createdProposal?.id || createdProposal?.Id;
+                      const createdProposalId =
+                        createdProposal?.id || createdProposal?.Id;
 
                       // 2) Tạo message “proposal”
                       const messagePayload = {
@@ -536,19 +628,22 @@ export default function Projects() {
                         clientId: confirmJob.ownerId,
                         freelancerId: currentUserId,
                         projectTitle: confirmJob.title,
-                        clientName: confirmJob.ownerName || "",       // nếu có
+                        clientName: confirmJob.ownerName || "", // nếu có
                         freelancerName: currentUserName || "",
                         coverLetter: cover,
-                        bidAmount: bid
+                        bidAmount: bid,
                       };
                       console.log("Message(proposal) payload:", messagePayload);
 
-                      await axios.post("messages/proposal", messagePayload);
+                      await axios.post("api/messages/proposal", messagePayload);
 
                       alert("Đã gửi proposal và tin nhắn tới chủ dự án.");
                     } catch (err) {
                       console.error("Proposal error:", err?.response || err);
-                      alert(err?.response?.data?.detail || "Không thể gửi proposal. Thử lại sau.");
+                      alert(
+                        err?.response?.data?.detail ||
+                          "Không thể gửi proposal. Thử lại sau."
+                      );
                     } finally {
                       setConfirmJob(null);
                     }
@@ -556,23 +651,28 @@ export default function Projects() {
                 >
                   Gửi proposal
                 </Button>
-
               </div>
             </div>
           </div>
         </>
       )}
 
-
       {/* ===== Modal tạo/sửa ===== */}
       {editing && (
         <>
-          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40" onClick={closeEdit} />
+          <div
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
+            onClick={closeEdit}
+          />
           <div className="fixed left-1/2 top-1/2 z-50 w-[min(96vw,760px)] -translate-x-1/2 -translate-y-1/2">
             <div className="rounded-2xl bg-white shadow-2xl border border-slate-200">
               <div className="p-4 border-b flex items-center justify-between">
-                <div className="font-semibold">{editing.id ? "Chỉnh sửa dự án" : "Tạo dự án mới"}</div>
-                <button className="btn btn-sm btn-ghost" onClick={closeEdit}>✕</button>
+                <div className="font-semibold">
+                  {editing.id ? "Chỉnh sửa dự án" : "Tạo dự án mới"}
+                </div>
+                <button className="btn btn-sm btn-ghost" onClick={closeEdit}>
+                  ✕
+                </button>
               </div>
 
               <div className="p-5 space-y-4">
@@ -586,20 +686,35 @@ export default function Projects() {
                   <div>
                     <label className="text-sm font-medium">Tiêu đề</label>
                     <input
-                      className={`input mt-1 w-full ${errors.title ? "border-red-500" : ""}`}
+                      className={`input mt-1 w-full ${
+                        errors.title ? "border-red-500" : ""
+                      }`}
                       value={editing.title}
-                      onChange={(e) => setEditing((s) => ({ ...s, title: e.target.value }))}
+                      onChange={(e) =>
+                        setEditing((s) => ({ ...s, title: e.target.value }))
+                      }
                       placeholder="Nhập tiêu đề dự án"
                     />
-                    {errors.title && <p className="text-xs text-red-600 mt-1">{errors.title}</p>}
+                    {errors.title && (
+                      <p className="text-xs text-red-600 mt-1">
+                        {errors.title}
+                      </p>
+                    )}
                   </div>
 
                   <div>
                     <label className="text-sm font-medium">Danh mục</label>
                     <select
-                      className={`select mt-1 w-full ${errors.categoryId ? "border-red-500" : ""}`}
+                      className={`select mt-1 w-full ${
+                        errors.categoryId ? "border-red-500" : ""
+                      }`}
                       value={editing.categoryId}
-                      onChange={(e) => setEditing((s) => ({ ...s, categoryId: e.target.value }))}
+                      onChange={(e) =>
+                        setEditing((s) => ({
+                          ...s,
+                          categoryId: e.target.value,
+                        }))
+                      }
                     >
                       <option value="">— Chọn danh mục —</option>
                       {categories.map((c) => (
@@ -609,7 +724,9 @@ export default function Projects() {
                       ))}
                     </select>
                     {errors.categoryId && (
-                      <p className="text-xs text-red-600 mt-1">{errors.categoryId}</p>
+                      <p className="text-xs text-red-600 mt-1">
+                        {errors.categoryId}
+                      </p>
                     )}
                   </div>
                 </div>
@@ -618,13 +735,19 @@ export default function Projects() {
                   <label className="text-sm font-medium">Mô tả</label>
                   <textarea
                     rows={4}
-                    className={`textarea mt-1 w-full ${errors.description ? "border-red-500" : ""}`}
+                    className={`textarea mt-1 w-full ${
+                      errors.description ? "border-red-500" : ""
+                    }`}
                     value={editing.description}
-                    onChange={(e) => setEditing((s) => ({ ...s, description: e.target.value }))}
+                    onChange={(e) =>
+                      setEditing((s) => ({ ...s, description: e.target.value }))
+                    }
                     placeholder="Mô tả chi tiết yêu cầu..."
                   />
                   {errors.description && (
-                    <p className="text-xs text-red-600 mt-1">{errors.description}</p>
+                    <p className="text-xs text-red-600 mt-1">
+                      {errors.description}
+                    </p>
                   )}
                 </div>
 
@@ -633,14 +756,23 @@ export default function Projects() {
                     <label className="text-sm font-medium">Ngân sách (đ)</label>
                     <input
                       type="number"
-                      className={`input mt-1 w-full ${errors.budgetAmount ? "border-red-500" : ""}`}
+                      className={`input mt-1 w-full ${
+                        errors.budgetAmount ? "border-red-500" : ""
+                      }`}
                       value={editing.budgetAmount}
-                      onChange={(e) => setEditing((s) => ({ ...s, budgetAmount: e.target.value }))}
+                      onChange={(e) =>
+                        setEditing((s) => ({
+                          ...s,
+                          budgetAmount: e.target.value,
+                        }))
+                      }
                       placeholder="0"
                       min={0}
                     />
                     {errors.budgetAmount && (
-                      <p className="text-xs text-red-600 mt-1">{errors.budgetAmount}</p>
+                      <p className="text-xs text-red-600 mt-1">
+                        {errors.budgetAmount}
+                      </p>
                     )}
                   </div>
 
@@ -649,7 +781,9 @@ export default function Projects() {
                     <select
                       className="select mt-1 w-full"
                       value={editing.status}
-                      onChange={(e) => setEditing((s) => ({ ...s, status: e.target.value }))}
+                      onChange={(e) =>
+                        setEditing((s) => ({ ...s, status: e.target.value }))
+                      }
                     >
                       <option value="Open">Open</option>
                       <option value="InProgress">InProgress</option>
@@ -664,7 +798,9 @@ export default function Projects() {
                     <SkillMultiSelect
                       skills={skills}
                       value={editing.skillIds}
-                      onChange={(ids) => setEditing((s) => ({ ...s, skillIds: ids }))}
+                      onChange={(ids) =>
+                        setEditing((s) => ({ ...s, skillIds: ids }))
+                      }
                     />
                   </div>
                 </div>
@@ -675,7 +811,11 @@ export default function Projects() {
                   Hủy
                 </Button>
                 <Button onClick={save} disabled={saving}>
-                  {saving ? "Đang lưu..." : editing.id ? "Lưu thay đổi" : "Tạo dự án"}
+                  {saving
+                    ? "Đang lưu..."
+                    : editing.id
+                    ? "Lưu thay đổi"
+                    : "Tạo dự án"}
                 </Button>
               </div>
             </div>
@@ -686,38 +826,55 @@ export default function Projects() {
       {/* ===== Modal XEM CHI TIẾT ===== */}
       {viewing && (
         <>
-          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40" onClick={closeView} />
+          <div
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
+            onClick={closeView}
+          />
           <div className="fixed left-1/2 top-1/2 z-50 w-[min(96vw,760px)] -translate-x-1/2 -translate-y-1/2">
             <div className="rounded-2xl bg-white shadow-2xl border border-slate-200">
               <div className="p-4 border-b flex items-center justify-between">
                 <div className="font-semibold">Chi tiết dự án</div>
-                <button className="btn btn-sm btn-ghost" onClick={closeView}>✕</button>
+                <button className="btn btn-sm btn-ghost" onClick={closeView}>
+                  ✕
+                </button>
               </div>
 
               <div className="p-5 space-y-4">
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <div className="text-xl font-semibold">{viewing.title}</div>
-                    <div className="mt-2 text-sm text-slate-600">{viewing.description}</div>
+                    <div className="mt-2 text-sm text-slate-600">
+                      {viewing.description}
+                    </div>
 
                     <div className="mt-3 flex flex-wrap gap-2">
                       <span className="badge">{viewing.categoryName}</span>
                       {(viewing.resolvedSkills || []).map((s) => (
-                        <span key={s} className="badge badge-outline">{s}</span>
+                        <span key={s} className="badge badge-outline">
+                          {s}
+                        </span>
                       ))}
                     </div>
                   </div>
 
                   <div className="text-right min-w-[160px]">
-                    <div className="text-xs uppercase tracking-wide text-slate-500">Ngân sách</div>
+                    <div className="text-xs uppercase tracking-wide text-slate-500">
+                      Ngân sách
+                    </div>
                     <div className="text-brand-700 font-semibold">
                       {viewing.budgetAmount?.toLocaleString("vi-VN") ?? "—"} đ
                     </div>
                     <div className="mt-2 text-xs text-slate-600">
-                      Trạng thái: <span className="badge badge-outline">{viewing.status}</span>
+                      Trạng thái:{" "}
+                      <span className="badge badge-outline">
+                        {viewing.status}
+                      </span>
                     </div>
                     <div className="mt-1 text-xs text-slate-500">
-                      Đăng lúc: {viewing.createdAt ? new Date(viewing.createdAt).toLocaleString("vi-VN") : "—"}
+                      Đăng lúc:{" "}
+                      {viewing.createdAt
+                        ? new Date(viewing.createdAt).toLocaleString("vi-VN")
+                        : "—"}
                     </div>
                   </div>
                 </div>
@@ -736,14 +893,18 @@ export default function Projects() {
                   </Button>
                 ) : (
                   viewing.status === "Open" && (
-                    <Button variant="outline" onClick={() => setConfirmJob({
-                      projectId: p.id,
-                      title: p.title,
-                      clientId: p.ownerId
-                    })}>
+                    <Button
+                      variant="outline"
+                      onClick={() =>
+                        setConfirmJob({
+                          projectId: p.id,
+                          title: p.title,
+                          clientId: p.ownerId,
+                        })
+                      }
+                    >
                       Nhận job
                     </Button>
-
                   )
                 )}
                 <Button onClick={closeView}>Đóng</Button>
@@ -784,10 +945,15 @@ function SkillMultiSelect({ skills, value = [], onChange }) {
       />
       <div className="border rounded-lg h-[160px] overflow-auto p-2 space-y-1 bg-slate-50">
         {filtered.length === 0 ? (
-          <div className="text-xs text-slate-500 px-1">Không có kỹ năng phù hợp</div>
+          <div className="text-xs text-slate-500 px-1">
+            Không có kỹ năng phù hợp
+          </div>
         ) : (
           filtered.map((s) => (
-            <label key={s.id} className="flex items-center gap-2 px-2 py-1 rounded hover:bg-white cursor-pointer">
+            <label
+              key={s.id}
+              className="flex items-center gap-2 px-2 py-1 rounded hover:bg-white cursor-pointer"
+            >
               <input
                 type="checkbox"
                 className="checkbox"
