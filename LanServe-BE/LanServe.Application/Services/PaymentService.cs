@@ -109,4 +109,9 @@ public class PaymentService : IPaymentService
             : $"/payment-failed?orderId={pay.Vnp_TxnRef}&code={pay.Vnp_ResponseCode}";
         return (true, redirect);
     }
+
+    public async Task<IEnumerable<Payment>> GetAllAsync()
+    {
+        return await _payments.GetAllAsync();
+    }
 }

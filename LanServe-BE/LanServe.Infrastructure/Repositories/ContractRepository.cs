@@ -22,6 +22,9 @@ public class ContractRepository : IContractRepository
     public async Task<IEnumerable<Contract>> GetByFreelancerIdAsync(string freelancerId)
         => await _collection.Find(x => x.FreelancerId == freelancerId).ToListAsync();
 
+    public async Task<IEnumerable<Contract>> GetAllAsync()
+        => await _collection.Find(_ => true).ToListAsync();
+
     public async Task<Contract> InsertAsync(Contract entity)
     {
         await _collection.InsertOneAsync(entity);

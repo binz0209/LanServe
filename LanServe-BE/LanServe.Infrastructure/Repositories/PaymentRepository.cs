@@ -16,6 +16,9 @@ public class PaymentRepository : IPaymentRepository
     public async Task<Payment?> GetByTxnRefAsync(string txnRef, CancellationToken ct = default)
         => await _collection.Find(x => x.Vnp_TxnRef == txnRef).FirstOrDefaultAsync(ct);
 
+    public async Task<IEnumerable<Payment>> GetAllAsync()
+        => await _collection.Find(_ => true).ToListAsync();
+
     public async Task<Payment> InsertAsync(Payment payment, CancellationToken ct = default)
     {
         await _collection.InsertOneAsync(payment, cancellationToken: ct);

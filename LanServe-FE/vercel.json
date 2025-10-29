@@ -1,0 +1,11 @@
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "framework": "vite",
+
+  "routes": [
+    { "handle": "filesystem" },
+    { "src": "/api/(.*)", "dest": "https://lanserve-api-cgfghcd9bshbazbd.malaysiawest-01.azurewebsites.net/api/$1" },
+    { "src": "/(.*)", "dest": "/index.html" }
+  ]
+}

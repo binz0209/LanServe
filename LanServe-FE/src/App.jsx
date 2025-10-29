@@ -24,11 +24,30 @@ import PaymentSuccess from "./pages/payment/PaymentSuccess";
 import PaymentFailed from "./pages/payment/PaymentFailed";
 
 import { Toaster } from "sonner";
+import AdminLayout from "./pages/admin/AdminLayout";
+import AdminDashboard from "./pages/admin/Dashboard";
+import AdminUsers from "./pages/admin/Users";
+import AdminProjects from "./pages/admin/Projects";
+import AdminContracts from "./pages/admin/Contracts";
+import AdminStatistics from "./pages/admin/Statistics";
+import AdminSettings from "./pages/admin/Settings";
 
 // Chặn route khi chưa login (đọc trực tiếp localStorage)
 function PrivateRoute({ children }) {
   const token = localStorage.getItem("token");
   return token ? children : <Navigate to="/login" replace />;
+}
+
+// Chặn route admin - chỉ admin mới vào được (case-insensitive)
+function AdminOnly({ children }) {
+  const token = localStorage.getItem("token");
+  const user = JSON.parse(localStorage.getItem("user") || "null");
+  
+  if (!token) return <Navigate to="/login" replace />;
+  // Check case-insensitive
+  if (user?.role?.toLowerCase() !== "admin") return <Navigate to="/" replace />;
+  
+  return children;
 }
 
 // Chặn route khi đã login
@@ -100,6 +119,24 @@ export default function App() {
             <Route path="portfolio" element={<Portfolio />} />
             <Route path="reviews" element={<Reviews />} />
           </Route>
+          
+          {/* Admin Routes */}
+          <Route
+            path="/admin"
+            element={
+              <AdminOnly>
+                <AdminLayout />
+              </AdminOnly>
+            }
+          >
+            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin/users" element={<AdminUsers />} />
+            <Route path="/admin/projects" element={<AdminProjects />} />
+            <Route path="/admin/contracts" element={<AdminContracts />} />
+            <Route path="/admin/statistics" element={<AdminStatistics />} />
+            <Route path="/admin/settings" element={<AdminSettings />} />
+          </Route>
+
           <Route
             path="*"
             element={<div className="container-ld py-24">404</div>}

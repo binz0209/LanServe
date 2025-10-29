@@ -39,22 +39,46 @@ export default function Login() {
       // Gắn header mặc định ngay lập tức cho các request sau login
       api.defaults.headers.common.Authorization = `Bearer ${token}`;
 
-      // Lưu user (nếu BE trả về)
-      if (res.data?.user) {
-        localStorage.setItem("user", JSON.stringify(res.data.user));
-      }
-
-
+      // Decode JWT để lấy thông tin user
       const decoded = jwtDecode(token);
+      
+      // Log để debug - log tất cả claims
+      console.log("=== DECODED JWT ===");
+      console.log(JSON.stringify(decoded, null, 2));
+      console.log("All keys:", Object.keys(decoded));
+      
       const userId =
         decoded.sub ||
         decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"] ||
+        decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier".toLowerCase()] ||
         decoded.userId ||
         null;
+      
+      const email = decoded.email ||
+                    decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"] ||
+                    decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress".toLowerCase()] ||
+                    form.email;
+      
+      // Check ALL possible role claim names (log để debug)
+      console.log("Decoded email:", decoded.email);
+      console.log("Decoded role:", decoded.role);
+      console.log("Checking all keys for role...");
+      
+      const role = decoded["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] ||
+                   decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/role"] ||
+                   decoded.role ||
+                   decoded.role?.toString() ||
+                   "User";
 
-      console.log("Đăng nhập thành công ✅");
-      console.log("JWT Token:", token);
-      console.log("UserID:", userId);
+      // Lưu user object vào localStorage
+      const userData = {
+        id: userId,
+        email: email,
+        role: role
+      };
+      localStorage.setItem("user", JSON.stringify(userData));
+
+      console.log("UserData saved:", userData);
       // Điều hướng
       nav("/", { replace: true });
     } catch (error) {
@@ -79,6 +103,33 @@ export default function Login() {
 
       localStorage.setItem("token", token);
       api.defaults.headers.common.Authorization = `Bearer ${token}`;
+
+      // Decode JWT để lấy thông tin user
+      const decoded = jwtDecode(token);
+      console.log("Decoded JWT (Google):", decoded);
+      
+      const userId =
+        decoded.sub ||
+        decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"] ||
+        decoded.userId;
+      
+      const email = decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"] ||
+                    decoded.email;
+      
+      const role = decoded["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] ||
+                   decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/role"] ||
+                   decoded["role"] ||
+                   decoded.role ||
+                   "User";
+
+      // Lưu user object vào localStorage
+      const userData = {
+        id: userId,
+        email: email,
+        role: role
+      };
+      localStorage.setItem("user", JSON.stringify(userData));
+      console.log("UserData saved (Google):", userData);
 
       toast.success("Đăng nhập bằng Google thành công!");
       nav("/", { replace: true });
