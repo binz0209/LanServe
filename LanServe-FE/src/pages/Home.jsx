@@ -9,12 +9,12 @@ export default function Home() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    api.get("/categories")
+    api.get("/api/categories")
       .then(res => setCategories(res.data ?? []))
       .catch(err => console.error("Load categories failed", err));
 
     // dùng /users vì BE chưa có /userprofiles
-    api.get("/users")
+    api.get("/api/users")
       .then(res => setFreelancers(res.data ?? []))
       .catch(err => console.error("Load freelancers failed", err));
   }, []);

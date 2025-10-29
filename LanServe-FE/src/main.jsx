@@ -6,6 +6,7 @@ import './index.css'
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import ReactDOM from "react-dom/client";
 
+// Tạm thời disable Google OAuth cho local development
 const clientId = "788333487085-464ddcp2362pl7da00ih2m2ig62mvv26.apps.googleusercontent.com";
 
 ReactDOM.createRoot(document.getElementById("root")).render(

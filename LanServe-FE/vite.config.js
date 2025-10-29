@@ -25,11 +25,12 @@ export default defineConfig({
   plugins: [react(), copyWebConfig()],
   base: '/', // Đảm bảo base URL đúng cho production
   server: {
+    port: 5174,
     proxy: {
       '/api': {
-        target: 'https://localhost:7003',
+        target: 'http://localhost:5070',
         changeOrigin: true,
-        secure: false, // chấp nhận cert tự ký khi dev
+        secure: false,
       }
     }
   },

@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "https://lanserve-api-cgfghcd9bshbazbd.malaysiawest-01.azurewebsites.net/api",
+  baseURL: import.meta.env.VITE_API_URL || "http://localhost:5070/api",
   headers: {
     "Content-Type": "application/json",
   },
