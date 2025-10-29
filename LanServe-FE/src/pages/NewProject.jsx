@@ -57,8 +57,8 @@ export default function NewProject() {
     (async () => {
       try {
         const [catRes, skillRes] = await Promise.all([
-          api.get("/categories"),
-          api.get("/skills"),
+          api.get("/api/categories"),
+          api.get("/api/skills"),
         ]);
         setCategories(catRes.data ?? []);
         setSkillOptions(skillRes.data ?? []);
@@ -139,7 +139,7 @@ export default function NewProject() {
       }
 
       // ② TẠO PROJECT (không rút tiền ở bước này)
-      await api.post("/projects", payload);
+      await api.post("/api/projects", payload);
 
       alert("Đăng dự án thành công!");
       navigate("/projects");
