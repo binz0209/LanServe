@@ -33,7 +33,8 @@ export default function Projects() {
   const [currentUserName, setCurrentUserName] = useState("");
   // ===== current user =====
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    const token =
+      localStorage.getItem("token") || sessionStorage.getItem("token");
     if (!token) return;
     try {
       const dec = jwtDecode(token);
@@ -637,7 +638,7 @@ export default function Projects() {
 
                       await axios.post("api/messages/proposal", messagePayload);
 
-                      alert("Đã gửi proposal và tin nhắn tới chủ dự án.");
+                      // alert("Đã gửi proposal và tin nhắn tới chủ dự án.");
                     } catch (err) {
                       console.error("Proposal error:", err?.response || err);
                       alert(

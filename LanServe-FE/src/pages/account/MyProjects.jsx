@@ -8,14 +8,20 @@ export default function MyProjects() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) { setLoading(false); return; }
+    const token =
+      localStorage.getItem("token") || sessionStorage.getItem("token");
+    if (!token) {
+      setLoading(false);
+      return;
+    }
 
     try {
       const dec = jwtDecode(token);
       const userId =
         dec.sub ||
-        dec["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"] ||
+        dec[
+          "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"
+        ] ||
         dec.userId;
 
       axios
@@ -23,7 +29,9 @@ export default function MyProjects() {
         .then((res) => setProjects(res.data ?? []))
         .catch((err) => console.error(err))
         .finally(() => setLoading(false));
-    } catch { setLoading(false); }
+    } catch {
+      setLoading(false);
+    }
   }, []);
 
   const statusColor = (s) =>
@@ -44,8 +52,12 @@ export default function MyProjects() {
       <div className="container-ld py-12">
         <div className="card text-center p-10">
           <div className="text-2xl font-semibold">Bạn chưa có dự án nào</div>
-          <p className="text-slate-600 mt-2">Tạo dự án đầu tiên để bắt đầu tuyển Freelancer.</p>
-          <Button className="mt-5" onClick={gotoCreate}>+ Tạo dự án</Button>
+          <p className="text-slate-600 mt-2">
+            Tạo dự án đầu tiên để bắt đầu tuyển Freelancer.
+          </p>
+          <Button className="mt-5" onClick={gotoCreate}>
+            + Tạo dự án
+          </Button>
         </div>
       </div>
     );
@@ -69,17 +81,28 @@ export default function MyProjects() {
               <div className="card-body">
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
-                    <div className="text-lg font-semibold truncate">{p.title}</div>
-                    <div className="mt-1 text-sm text-slate-600 line-clamp-2">{p.description}</div>
+                    <div className="text-lg font-semibold truncate">
+                      {p.title}
+                    </div>
+                    <div className="mt-1 text-sm text-slate-600 line-clamp-2">
+                      {p.description}
+                    </div>
                   </div>
-                  <div className={`px-2 py-0.5 rounded-full text-xs border ${statusColor(p.status)}`}>
+                  <div
+                    className={`px-2 py-0.5 rounded-full text-xs border ${statusColor(
+                      p.status
+                    )}`}
+                  >
                     {p.status}
                   </div>
                 </div>
 
                 <div className="mt-4 flex items-center justify-between">
                   <div className="text-xs text-slate-500">
-                    Đăng: {p.createdAt ? new Date(p.createdAt).toLocaleString("vi-VN") : "—"}
+                    Đăng:{" "}
+                    {p.createdAt
+                      ? new Date(p.createdAt).toLocaleString("vi-VN")
+                      : "—"}
                   </div>
                   <div className="text-brand-700 font-semibold">
                     {p.budgetAmount?.toLocaleString("vi-VN") ?? "—"} đ
@@ -87,10 +110,18 @@ export default function MyProjects() {
                 </div>
 
                 <div className="mt-4 flex gap-2">
-                  <Button variant="outline" onClick={() => (window.location.href = `/projects/${key}`)}>
+                  <Button
+                    variant="outline"
+                    onClick={() => (window.location.href = `/projects/${key}`)}
+                  >
                     Xem
                   </Button>
-                  <Button variant="outline" onClick={() => (window.location.href = `/projects/edit/${key}`)}>
+                  <Button
+                    variant="outline"
+                    onClick={() =>
+                      (window.location.href = `/projects/edit/${key}`)
+                    }
+                  >
                     Chỉnh sửa
                   </Button>
                 </div>

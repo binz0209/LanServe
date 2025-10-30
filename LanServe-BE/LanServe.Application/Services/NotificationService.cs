@@ -7,10 +7,11 @@ namespace LanServe.Application.Services;
 public class NotificationService : INotificationService
 {
     private readonly INotificationRepository _repo;
-
-    public NotificationService(INotificationRepository repo)
+    private readonly IRealtimeService _realtime;
+    public NotificationService(INotificationRepository repo, IRealtimeService realtime)
     {
         _repo = repo;
+        _realtime = realtime;
     }
 
     public Task<IEnumerable<Notification>> GetByUserAsync(string userId)
@@ -19,11 +20,13 @@ public class NotificationService : INotificationService
     public Task<Notification?> GetByIdAsync(string id)
         => _repo.GetByIdAsync(id);
 
-    public Task<Notification> CreateAsync(Notification entity)
+    public async Task<Notification> CreateAsync(Notification entity)
     {
         entity.CreatedAt = DateTime.UtcNow;
         entity.IsRead = false;
-        return _repo.InsertAsync(entity);
+        var saved = await _repo.InsertAsync(entity);
+        await _realtime.SendToUserAsync(saved.UserId, saved);
+        return saved;
     }
 
     public Task<bool> MarkAsReadAsync(string id)

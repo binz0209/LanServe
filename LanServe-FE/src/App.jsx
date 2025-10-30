@@ -1,6 +1,15 @@
+import { useEffect } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
+import NotificationBell from "./components/NotificationBell";
+// 🔔 SignalR
+import {
+  notificationHub,
+  startNotificationHub,
+} from "./services/signalrClient";
+import { useNotificationStore } from "./stores/notificationStore";
+
 import Home from "./pages/Home";
 import HowItWorks from "./pages/HowItWorks";
 import NewProject from "./pages/NewProject";
@@ -32,47 +41,77 @@ import AdminContracts from "./pages/admin/Contracts";
 import AdminStatistics from "./pages/admin/Statistics";
 import AdminSettings from "./pages/admin/Settings";
 
-// Chặn route khi chưa login (đọc trực tiếp localStorage)
+// ================== AUTH HELPERS ==================
 function PrivateRoute({ children }) {
   const token =
     localStorage.getItem("token") || sessionStorage.getItem("token");
   return token ? children : <Navigate to="/login" replace />;
 }
 
-// Chặn route admin - chỉ admin mới vào được (case-insensitive)
 function AdminOnly({ children }) {
   const token =
     localStorage.getItem("token") || sessionStorage.getItem("token");
   const user = JSON.parse(
     localStorage.getItem("user") || sessionStorage.getItem("user") || "null"
   );
-
   if (!token) return <Navigate to="/login" replace />;
   if (user?.role?.toLowerCase() !== "admin") return <Navigate to="/" replace />;
-
   return children;
 }
 
-// Chặn route khi đã login
 function GuestOnly({ children }) {
   const token =
     localStorage.getItem("token") || sessionStorage.getItem("token");
   return token ? <Navigate to="/" replace /> : children;
 }
 
+// ================== MAIN APP ==================
 export default function App() {
+  const addNotification = useNotificationStore((s) => s.addNotification);
+  const fetchFromServer = useNotificationStore((s) => s.fetchFromServer);
+  const initConnection = useNotificationStore((s) => s.initConnection);
+  useEffect(() => {
+    const token =
+      localStorage.getItem("token") ||
+      sessionStorage.getItem("token") ||
+      localStorage.getItem("accessToken");
+
+    if (token) {
+      console.log("📦 Loading notifications from DB...");
+      fetchFromServer(); // gọi API /api/notifications/my
+      initConnection(); // khởi tạo SignalR realtime
+    }
+  }, [fetchFromServer, initConnection]);
+
+  // ✅ Lắng nghe SignalR khi app load
+  // useEffect(() => {
+  //   startNotificationHub();
+  //   notificationHub.on("ReceiveNotification", (notif) => {
+  //     try {
+  //       notif.payloadObj = JSON.parse(notif.payload || "{}");
+  //     } catch {}
+  //     console.log("🔔 Notification received:", notif);
+  //     addNotification(notif);
+  //   });
+
+  //   return () => {
+  //     notificationHub.off("ReceiveNotification");
+  //   };
+  // }, [addNotification]);
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
       <main className="flex-1">
         <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/how-it-works" element={<HowItWorks />} />
+          <Route path="/projects" element={<Projects />} />
           <Route path="/wallet" element={<WalletPage />} />
           <Route path="/payment-success" element={<PaymentSuccess />} />
           <Route path="/payment-failed" element={<PaymentFailed />} />
           <Route path="/db-test" element={<DbTest />} />
-          <Route path="/" element={<Home />} />
-          <Route path="/how-it-works" element={<HowItWorks />} />
-          <Route path="/projects" element={<Projects />} />
+
           <Route
             path="/post-project"
             element={
@@ -81,6 +120,7 @@ export default function App() {
               </PrivateRoute>
             }
           />
+
           <Route
             path="/account"
             element={
@@ -99,7 +139,9 @@ export default function App() {
           <Route path="/profile/:userId" element={<AccountLayout />}>
             <Route index element={<Profile />} />
           </Route>
+
           <Route path="/users" element={<UserSearch />} />
+
           <Route
             path="/login"
             element={
@@ -116,6 +158,7 @@ export default function App() {
               </GuestOnly>
             }
           />
+
           <Route path="/freelancer" element={<FreelancerLayout />}>
             <Route index element={<Navigate to="intro" replace />} />
             <Route path="intro" element={<Intro />} />
@@ -147,6 +190,7 @@ export default function App() {
           />
         </Routes>
       </main>
+
       <Footer />
       <Toaster richColors position="top-center" />
     </div>

@@ -4,6 +4,8 @@ import { jwtDecode } from "jwt-decode";
 import { MessageSquare, User, Wallet, Shield } from "lucide-react"; // 👈 thêm Shield icon
 import { useEffect } from "react";
 import { useWalletStore } from "../stores/walletStore"; // 👈 import store
+import NotificationBell from "./NotificationBell";
+import { useNotificationStore } from "../stores/notificationStore";
 
 export default function Navbar() {
   const nav = useNavigate();
@@ -28,10 +30,9 @@ export default function Navbar() {
 
   const { balance, fetchBalance, loading } = useWalletStore();
 
-  // Tạm thời bỏ qua fetch wallet để tránh lỗi 404
-  // useEffect(() => {
-  //   if (userId) fetchBalance(userId);
-  // }, [userId, fetchBalance]);
+  useEffect(() => {
+    if (userId) fetchBalance(userId);
+  }, [userId, fetchBalance]);
 
   // Check if user is Admin (case-insensitive)
   const user = JSON.parse(
@@ -46,14 +47,22 @@ export default function Navbar() {
   const linkClass = ({ isActive }) =>
     `${item} ${isActive ? "text-brand-700 font-medium" : "text-slate-700"}`;
 
-  const onLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    sessionStorage.removeItem("token");
-    sessionStorage.removeItem("user");
-    nav("/login", { replace: true });
-  };
+  const onLogout = async () => {
+    try {
+      const store = useNotificationStore.getState();
+      await store.reset(); // 🧹 Dừng SignalR & xóa noti cũ (phải await)
 
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      sessionStorage.removeItem("token");
+      sessionStorage.removeItem("user");
+
+      console.log("🚪 Logged out & cleared notifications");
+      window.location.href = "/login";
+    } catch (err) {
+      console.error("Logout error:", err);
+    }
+  };
   const goWallet = () => nav("/wallet");
 
   const renderBalance = () => {
@@ -105,6 +114,9 @@ export default function Navbar() {
               <NavLink to="/account/messages" className={linkClass}>
                 <MessageSquare className="w-5 h-5" />
               </NavLink>
+
+              <NotificationBell />
+
               <NavLink
                 to={`/account/profile${userId ? `?id=${userId}` : ""}`}
                 className={linkClass}

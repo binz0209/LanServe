@@ -1,4 +1,6 @@
 // ===== Usings =====
+using LanServe.Api.Hubs;
+using LanServe.Api.Services;
 using LanServe.Application.Interfaces.Repositories;
 using LanServe.Application.Interfaces.Services;
 using LanServe.Application.Services;             // UserService, v.v.
@@ -8,6 +10,7 @@ using LanServe.Infrastructure.Repositories;
 using LanServe.Infrastructure.Services;          // JwtTokenService, v.v.
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Security.Claims;
@@ -21,6 +24,11 @@ Console.WriteLine("==== App starting... ====");
 Console.WriteLine($"MongoDb:DbName = {config["MongoDb:DbName"]}");
 Console.WriteLine($"MongoDb:ConnectionString = {(string.IsNullOrEmpty(config["MongoDb:ConnectionString"]) ? "NULL" : "FOUND")}");
 Console.WriteLine("=========================");
+
+builder.Services.AddSignalR();
+builder.Services.AddScoped<IRealtimeService, SignalRRealtimeService>();
+builder.Services.AddSingleton<IUserIdProvider, CustomUserIdProvider>();
+builder.Services.AddSingleton<IRealtimeService, RealtimeService>();
 
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();   // 👈 bắt buộc để log ra stdout/stderr cho az webapp log tail
@@ -226,5 +234,7 @@ if (!string.IsNullOrWhiteSpace(jwtKey))
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.MapHub<NotificationHub>("/hubs/notification");
 
 app.Run();

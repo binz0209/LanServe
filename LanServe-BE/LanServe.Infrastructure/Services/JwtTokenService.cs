@@ -26,7 +26,7 @@ public class JwtTokenService : IJwtTokenService
         // ✅ thay đổi thời gian hết hạn dựa trên RememberMe
         var expires = rememberMe
             ? DateTime.UtcNow.AddDays(7)   // 7 ngày
-            : DateTime.UtcNow.AddMinutes(5); // 1 giờ mặc định
+            : DateTime.UtcNow.AddMinutes(5); 
 
         var claims = new[]
         {

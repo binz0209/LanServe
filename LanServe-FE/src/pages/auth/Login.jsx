@@ -6,6 +6,7 @@ import api from "../../lib/api";
 import { jwtDecode } from "jwt-decode";
 import { GoogleLogin } from "@react-oauth/google";
 import { toast } from "sonner";
+import { useNotificationStore } from "../../stores/notificationStore";
 
 export default function Login() {
   const nav = useNavigate();
@@ -103,6 +104,10 @@ export default function Login() {
       }
 
       console.log("UserData saved:", userData);
+      const notifStore = useNotificationStore.getState();
+      await notifStore.reset(); // 🧹 Dọn store và stop connection cũ nếu có
+      await notifStore.fetchFromServer(); // 📥 Load lại thông báo trong DB
+      await notifStore.initConnection(); // 🔗 Mở kết nối SignalR bằng token mới
       nav("/", { replace: true });
     } catch (error) {
       console.error("Login error:", error);
@@ -158,6 +163,11 @@ export default function Login() {
       };
 
       localStorage.setItem("user", JSON.stringify(userData));
+
+      const notifStore = useNotificationStore.getState();
+      await notifStore.reset(); // 🧹 Clear store & stop old connection
+      await notifStore.fetchFromServer(); // 📥 Load noti mới theo user
+      await notifStore.initConnection(); // 🔗 Kết nối SignalR bằng token mới
       console.log("UserData saved (Google):", userData);
 
       toast.success("Đăng nhập bằng Google thành công!");

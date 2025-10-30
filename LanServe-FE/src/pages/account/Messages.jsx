@@ -7,7 +7,8 @@ import EmptyState from "../../components/EmptyState";
 
 // Helper: tách key thành projectId / receiverId / senderId
 const parseKey = (key = "") => {
-  const [projectId = "null", receiverId = "", senderId = ""] = String(key).split(":");
+  const [projectId = "null", receiverId = "", senderId = ""] =
+    String(key).split(":");
   return { projectId, receiverId, senderId };
 };
 
@@ -19,7 +20,9 @@ function normalizeMessage(m = {}) {
     const raw = (d.$date && (d.$date.$numberLong || d.$date)) || d;
     const n = Number(raw);
     try {
-      return Number.isFinite(n) ? new Date(n).toISOString() : new Date(raw).toISOString();
+      return Number.isFinite(n)
+        ? new Date(n).toISOString()
+        : new Date(raw).toISOString();
     } catch {
       return new Date().toISOString();
     }
@@ -86,7 +89,11 @@ async function withActionButtonsIfPending(safeHtml, currentUserId) {
   let ownerId = null;
   try {
     const res = await api.get(`api/Proposals/${proposalId}`);
-    ownerId = res.data?.senderId || res.data?.freelancerId || res.data?.createdBy || null;
+    ownerId =
+      res.data?.senderId ||
+      res.data?.freelancerId ||
+      res.data?.createdBy ||
+      null;
   } catch {
     console.warn(`[Proposal ${proposalId}] cannot fetch owner`);
   }
@@ -97,7 +104,11 @@ async function withActionButtonsIfPending(safeHtml, currentUserId) {
   actions.className = "actions flex gap-2 mt-2";
 
   actions.innerHTML = `
-    ${!isOwner ? `<button data-action="accept" class="btn btn-sm btn-success">✅ Đồng ý</button>` : ""}
+    ${
+      !isOwner
+        ? `<button data-action="accept" class="btn btn-sm btn-success">✅ Đồng ý</button>`
+        : ""
+    }
     <button data-action="edit" class="btn btn-sm btn-outline">✏️ Chỉnh sửa</button>
     <button data-action="cancel" class="btn btn-sm btn-danger">❌ Hủy đề xuất</button>
   `;
@@ -153,7 +164,8 @@ export default function Messages() {
     const el = containerRef.current;
     if (!el) return;
     const threshold = 40;
-    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight <= threshold;
+    const atBottom =
+      el.scrollHeight - el.scrollTop - el.clientHeight <= threshold;
     setAutoStick(atBottom);
   };
 
@@ -164,13 +176,16 @@ export default function Messages() {
   }, [messages, activeUser, autoStick]);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    const token =
+      localStorage.getItem("token") || sessionStorage.getItem("token");
     if (!token) return setLoading(false);
     try {
       const decoded = jwtDecode(token);
       const id =
         decoded.sub ||
-        decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"] ||
+        decoded[
+          "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"
+        ] ||
         decoded.userId ||
         null;
       setCurrentUserId(id);
@@ -228,7 +243,8 @@ export default function Messages() {
         try {
           const res = await api.get(`api/projects/${pid}`);
           const proj = res.data || {};
-          const title = proj.title || proj.name || proj.projectName || "(Không tên)";
+          const title =
+            proj.title || proj.name || proj.projectName || "(Không tên)";
           const owner =
             proj.ownerName ||
             proj.createdByName ||
@@ -265,7 +281,10 @@ export default function Messages() {
             "data-contract-id", // ✅ để xem hợp đồng
           ],
         });
-        const finalHtml = await withActionButtonsIfPending(safeHtml, currentUserId);
+        const finalHtml = await withActionButtonsIfPending(
+          safeHtml,
+          currentUserId
+        );
         return { ...m, finalHtml };
       })
     );
@@ -330,7 +349,12 @@ export default function Messages() {
         if (!proposalId) return;
         try {
           btn.disabled = true;
-          console.log("Accepting proposal:", proposalId, "for project:", projectId);
+          console.log(
+            "Accepting proposal:",
+            proposalId,
+            "for project:",
+            projectId
+          );
 
           // 1️⃣ Lấy giá đề xuất hiện tại
           const amount = await getProposalAmount(proposalId);
@@ -371,13 +395,12 @@ export default function Messages() {
           await api.post(`api/Proposals/${proposalId}/accept`, { projectId });
           await loadThread(activeConversationKey); // reload thread để thấy message mới
           alert("Đồng ý đề xuất thành công!");
-
         } catch (err) {
           console.error("Accept proposal error:", err?.message || err);
           alert(
             err?.response?.data?.detail ||
-            err?.response?.data?.message ||
-            "Không thể chấp nhận đề xuất này."
+              err?.response?.data?.message ||
+              "Không thể chấp nhận đề xuất này."
           );
         } finally {
           btn.disabled = false;
@@ -419,15 +442,17 @@ export default function Messages() {
         text,
         projectId: projectId && projectId !== "null" ? projectId : null,
       });
-      const saved = res.data || normalizeMessage({
-        _id: { $oid: crypto.randomUUID() },
-        conversationKey: activeConversationKey,
-        senderId: currentUserId,
-        receiverId: activeUser.id || activeUser._id || activeUser.userId,
-        text,
-        createdAt: { $date: Date.now() },
-        isRead: true,
-      });
+      const saved =
+        res.data ||
+        normalizeMessage({
+          _id: { $oid: crypto.randomUUID() },
+          conversationKey: activeConversationKey,
+          senderId: currentUserId,
+          receiverId: activeUser.id || activeUser._id || activeUser.userId,
+          text,
+          createdAt: { $date: Date.now() },
+          isRead: true,
+        });
       setMessages((prev) => [...prev, saved]);
       setText("");
     } catch (err) {
@@ -447,7 +472,7 @@ export default function Messages() {
     const res = await api.post("/api/wallets/payout", payload);
     return res.data;
   }
-  
+
   const submitEdit = async () => {
     const n = Number(newPrice);
     if (!editingProposalId) return;
@@ -521,10 +546,11 @@ export default function Messages() {
               setActiveConversationKey(it.conversationKey);
               setMessages([]);
             }}
-            className={`cursor-pointer p-3 rounded-xl border transition-colors duration-150 ${activeConversationKey === it.conversationKey
-              ? "border-brand-700 bg-blue-100 text-blue-900"
-              : "border-slate-200 hover:bg-slate-50 text-slate-700"
-              }`}
+            className={`cursor-pointer p-3 rounded-xl border transition-colors duration-150 ${
+              activeConversationKey === it.conversationKey
+                ? "border-brand-700 bg-blue-100 text-blue-900"
+                : "border-slate-200 hover:bg-slate-50 text-slate-700"
+            }`}
           >
             <div className="font-medium truncate text-base">
               📁 <strong>{it.projectName}</strong>
@@ -563,7 +589,11 @@ export default function Messages() {
               Đang chat với {activeUser.fullName || activeUser.email}
             </div>
             <div className="border rounded-lg bg-slate-50 p-4 h-[400px] flex flex-col">
-              <div ref={containerRef} onScroll={onScroll} className="flex-1 overflow-y-auto space-y-3">
+              <div
+                ref={containerRef}
+                onScroll={onScroll}
+                className="flex-1 overflow-y-auto space-y-3"
+              >
                 {messages.length === 0 ? (
                   <EmptyState title="Chưa có tin nhắn nào" />
                 ) : (
@@ -573,11 +603,18 @@ export default function Messages() {
                     return (
                       <div
                         key={m.id}
-                        className={`max-w-[70%] px-4 py-2 rounded-2xl shadow-md border ${isMine ? "ml-auto border-brand-200" : "mr-auto border-slate-200"
-                          }`}
+                        className={`max-w-[70%] px-4 py-2 rounded-2xl shadow-md border ${
+                          isMine
+                            ? "ml-auto border-brand-200"
+                            : "mr-auto border-slate-200"
+                        }`}
                       >
                         {showHtml ? (
-                          <div dangerouslySetInnerHTML={{ __html: m.finalHtml || m.text }} />
+                          <div
+                            dangerouslySetInnerHTML={{
+                              __html: m.finalHtml || m.text,
+                            }}
+                          />
                         ) : (
                           m.text
                         )}
@@ -611,7 +648,9 @@ export default function Messages() {
       {showEditModal && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-2xl shadow-lg w-full max-w-md">
-            <h2 className="text-lg font-semibold mb-3">Chỉnh sửa giá đề xuất</h2>
+            <h2 className="text-lg font-semibold mb-3">
+              Chỉnh sửa giá đề xuất
+            </h2>
             <input
               type="number"
               min="1"
@@ -622,10 +661,17 @@ export default function Messages() {
               onKeyDown={(e) => e.key === "Enter" && submitEdit()}
             />
             <div className="flex justify-end gap-2">
-              <button className="btn btn-outline" onClick={() => setShowEditModal(false)}>
+              <button
+                className="btn btn-outline"
+                onClick={() => setShowEditModal(false)}
+              >
                 Hủy
               </button>
-              <button className="btn btn-primary" onClick={submitEdit} disabled={editLoading}>
+              <button
+                className="btn btn-primary"
+                onClick={submitEdit}
+                disabled={editLoading}
+              >
                 {editLoading ? "Đang lưu..." : "Lưu thay đổi"}
               </button>
             </div>
@@ -639,15 +685,23 @@ export default function Messages() {
           <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-xl w-full max-w-md">
             <h2 className="text-base font-semibold mb-2">Hủy đề xuất?</h2>
             <p className="text-sm text-slate-600 dark:text-slate-300">
-              Thao tác này sẽ xóa thẻ đề xuất hiện tại và tạo một thông báo "Đã hủy" trong đoạn chat.
+              Thao tác này sẽ xóa thẻ đề xuất hiện tại và tạo một thông báo "Đã
+              hủy" trong đoạn chat.
             </p>
             <div className="flex justify-end gap-2 mt-5">
-              <button className="btn" onClick={() => setConfirmingCancel(false)}>Không</button>
+              <button
+                className="btn"
+                onClick={() => setConfirmingCancel(false)}
+              >
+                Không
+              </button>
               <button
                 className="btn btn-danger"
                 onClick={async () => {
                   try {
-                    await api.post(`api/Proposals/${cancelProposalId}/cancel`, { projectId: null });
+                    await api.post(`api/Proposals/${cancelProposalId}/cancel`, {
+                      projectId: null,
+                    });
                     setConfirmingCancel(false);
                     setCancelProposalId("");
                     await loadThread(activeConversationKey);
@@ -668,12 +722,25 @@ export default function Messages() {
           <div className="bg-white text-black p-6 rounded-2xl shadow-xl w-full max-w-lg">
             <h2 className="text-base font-semibold mb-4">Thông tin hợp đồng</h2>
             <div className="space-y-2 text-sm">
-              <div><b>Mã hợp đồng:</b> {contractData?.id || contractData?._id}</div>
-              <div><b>Project:</b> {contractData?.projectId}</div>
-              <div><b>Client:</b> {contractData?.clientId}</div>
-              <div><b>Freelancer:</b> {contractData?.freelancerId}</div>
-              <div><b>Số tiền:</b> {Number(contractData?.agreedAmount || 0).toLocaleString()} đ</div>
-              <div><b>Trạng thái:</b> {contractData?.status}</div>
+              <div>
+                <b>Mã hợp đồng:</b> {contractData?.id || contractData?._id}
+              </div>
+              <div>
+                <b>Project:</b> {contractData?.projectId}
+              </div>
+              <div>
+                <b>Client:</b> {contractData?.clientId}
+              </div>
+              <div>
+                <b>Freelancer:</b> {contractData?.freelancerId}
+              </div>
+              <div>
+                <b>Số tiền:</b>{" "}
+                {Number(contractData?.agreedAmount || 0).toLocaleString()} đ
+              </div>
+              <div>
+                <b>Trạng thái:</b> {contractData?.status}
+              </div>
               <div>
                 <b>Ngày tạo:</b>{" "}
                 {contractData?.createdAt
@@ -692,15 +759,25 @@ export default function Messages() {
                     disabled={payoutLoading}
                     onClick={async () => {
                       // 👉 Đây chính là đoạn onClick bạn hỏi
-                      if (!confirm("Xác nhận hoàn thành dự án và chuyển tiền cho freelancer?")) return;
+                      if (
+                        !confirm(
+                          "Xác nhận hoàn thành dự án và chuyển tiền cho freelancer?"
+                        )
+                      )
+                        return;
                       try {
                         setPayoutLoading(true);
 
                         const amount = Number(contractData?.agreedAmount || 0);
                         const freelancerId = contractData?.freelancerId;
-                        const contractId = contractData?.id || contractData?._id;
+                        const contractId =
+                          contractData?.id || contractData?._id;
 
-                        if (!freelancerId || !Number.isFinite(amount) || amount <= 0) {
+                        if (
+                          !freelancerId ||
+                          !Number.isFinite(amount) ||
+                          amount <= 0
+                        ) {
                           alert("Thiếu thông tin để chuyển tiền.");
                           return;
                         }
@@ -710,7 +787,11 @@ export default function Messages() {
                         }
 
                         // 1) 💸 Cộng tiền cho freelancer
-                        await payoutToFreelancer(freelancerId, amount, contractId);
+                        await payoutToFreelancer(
+                          freelancerId,
+                          amount,
+                          contractId
+                        );
 
                         // 2) 📝 Cập nhật trạng thái hợp đồng thành Completed
                         try {
@@ -719,11 +800,16 @@ export default function Messages() {
                             status: "Completed",
                           });
                         } catch {
-                          await api.put(`api/Contracts/${contractId}`, { status: "Completed" });
+                          await api.put(`api/Contracts/${contractId}`, {
+                            status: "Completed",
+                          });
                         }
 
                         // 3) Cập nhật UI và gửi tin nhắn
-                        setContractData((prev) => ({ ...prev, status: "Completed" }));
+                        setContractData((prev) => ({
+                          ...prev,
+                          status: "Completed",
+                        }));
                         setMessages((prev) => [
                           ...prev,
                           {
@@ -736,22 +822,26 @@ export default function Messages() {
                           },
                         ]);
 
-                        alert("Đã xác nhận hoàn thành và chuyển tiền cho freelancer.");
+                        alert(
+                          "Đã xác nhận hoàn thành và chuyển tiền cho freelancer."
+                        );
                         setShowContractModal(false);
                       } catch (err) {
                         console.error("Payout/Complete error:", err);
                         alert(
                           err?.response?.data?.detail ||
-                          err?.response?.data?.message ||
-                          err?.message ||
-                          "Không thể hoàn tất thanh toán."
+                            err?.response?.data?.message ||
+                            err?.message ||
+                            "Không thể hoàn tất thanh toán."
                         );
                       } finally {
                         setPayoutLoading(false);
                       }
                     }}
                   >
-                    {payoutLoading ? "Đang chuyển..." : "✅ Xác nhận hoàn thành"}
+                    {payoutLoading
+                      ? "Đang chuyển..."
+                      : "✅ Xác nhận hoàn thành"}
                   </button>
                 )}
 
@@ -765,8 +855,6 @@ export default function Messages() {
           </div>
         </div>
       )}
-
-
     </div>
   );
 }

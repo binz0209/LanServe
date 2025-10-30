@@ -36,13 +36,16 @@ export default function NewProject() {
       .replace(/^ObjectId\(["']?(.+?)["']?\)$/i, "$1");
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    const token =
+      localStorage.getItem("token") || sessionStorage.getItem("token");
     if (!token) return;
     try {
       const dec = jwtDecode(token);
       const id =
         dec.sub ||
-        dec["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"] ||
+        dec[
+          "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"
+        ] ||
         dec.userId ||
         dec.uid ||
         "";
@@ -57,8 +60,8 @@ export default function NewProject() {
     (async () => {
       try {
         const [catRes, skillRes] = await Promise.all([
-          api.get("/categories"),
-          api.get("/skills"),
+          api.get("/api/categories"),
+          api.get("/api/skills"),
         ]);
         setCategories(catRes.data ?? []);
         setSkillOptions(skillRes.data ?? []);
@@ -130,16 +133,16 @@ export default function NewProject() {
         if (balance < required) {
           alert(
             `Số dư ví không đủ để chi trả cho dự án này.\n` +
-            `Cần: ${required.toLocaleString("vi-VN")} VND\n` +
-            `Hiện có: ${balance.toLocaleString("vi-VN")} VND\n\n` +
-            `Vui lòng nạp thêm tiền trước khi đăng dự án.`
+              `Cần: ${required.toLocaleString("vi-VN")} VND\n` +
+              `Hiện có: ${balance.toLocaleString("vi-VN")} VND\n\n` +
+              `Vui lòng nạp thêm tiền trước khi đăng dự án.`
           );
           return; // dừng lại, không tạo project
         }
       }
 
       // ② TẠO PROJECT (không rút tiền ở bước này)
-      await api.post("/projects", payload);
+      await api.post("/api/projects", payload);
 
       alert("Đăng dự án thành công!");
       navigate("/projects");
@@ -281,7 +284,11 @@ export default function NewProject() {
 
         {/* Actions */}
         <div className="flex justify-end gap-3">
-          <Button variant="outline" onClick={() => navigate("/projects")} disabled={submitting}>
+          <Button
+            variant="outline"
+            onClick={() => navigate("/projects")}
+            disabled={submitting}
+          >
             Hủy bỏ
           </Button>
           <Button onClick={handleSubmit} disabled={submitting}>

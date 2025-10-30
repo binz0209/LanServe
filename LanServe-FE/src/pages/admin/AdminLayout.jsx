@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Outlet, Link, useLocation, Navigate } from 'react-router-dom';
+import React, { useState } from "react";
+import { Outlet, Link, useLocation, Navigate } from "react-router-dom";
 import {
   LayoutDashboard,
   Users,
@@ -9,28 +9,30 @@ import {
   Settings,
   Menu,
   X,
-  LogOut
-} from 'lucide-react';
+  LogOut,
+} from "lucide-react";
 
 const AdminLayout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const location = useLocation();
 
   // Check admin role
-  const user = JSON.parse(localStorage.getItem('user') || 'null');
-  const isAdmin = user?.role === 'Admin';
+  const user = JSON.parse(
+    localStorage.getItem("user") || sessionStorage.getItem("user") || "null"
+  );
+  const isAdmin = user?.role === "Admin";
 
   if (!isAdmin) {
     return <Navigate to="/" replace />;
   }
 
   const menuItems = [
-    { name: 'Dashboard', icon: LayoutDashboard, path: '/admin' },
-    { name: 'Người dùng', icon: Users, path: '/admin/users' },
-    { name: 'Dự án', icon: FolderKanban, path: '/admin/projects' },
-    { name: 'Đơn hàng', icon: FileText, path: '/admin/contracts' },
-    { name: 'Thống kê', icon: BarChart3, path: '/admin/statistics' },
-    { name: 'Cài đặt', icon: Settings, path: '/admin/settings' },
+    { name: "Dashboard", icon: LayoutDashboard, path: "/admin" },
+    { name: "Người dùng", icon: Users, path: "/admin/users" },
+    { name: "Dự án", icon: FolderKanban, path: "/admin/projects" },
+    { name: "Đơn hàng", icon: FileText, path: "/admin/contracts" },
+    { name: "Thống kê", icon: BarChart3, path: "/admin/statistics" },
+    { name: "Cài đặt", icon: Settings, path: "/admin/settings" },
   ];
 
   return (
@@ -38,7 +40,7 @@ const AdminLayout = () => {
       {/* Sidebar */}
       <aside
         className={`bg-slate-800 text-white transition-all duration-300 ${
-          isSidebarOpen ? 'w-64' : 'w-0'
+          isSidebarOpen ? "w-64" : "w-0"
         } overflow-hidden flex flex-col`}
       >
         {/* Header */}
@@ -62,7 +64,7 @@ const AdminLayout = () => {
                 key={item.path}
                 to={item.path}
                 className={`flex items-center gap-3 px-4 py-3 hover:bg-slate-700 transition-colors ${
-                  isActive ? 'bg-slate-700 border-r-4 border-blue-500' : ''
+                  isActive ? "bg-slate-700 border-r-4 border-blue-500" : ""
                 }`}
               >
                 <Icon size={20} />
@@ -103,5 +105,3 @@ const AdminLayout = () => {
 };
 
 export default AdminLayout;
-
-

@@ -12,7 +12,8 @@ export default function UserSearch() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const token = localStorage.getItem("token");
+  const token =
+    localStorage.getItem("token") || sessionStorage.getItem("token");
   let currentUserId = null;
   if (token) {
     const decoded = jwtDecode(token);
@@ -133,7 +134,9 @@ export default function UserSearch() {
       )}
 
       {!loading && filteredUsers.length === 0 && (
-        <p className="text-slate-500 mt-4">Hãy Đăng nhập để xem danh sách người dùng.</p>
+        <p className="text-slate-500 mt-4">
+          Hãy Đăng nhập để xem danh sách người dùng.
+        </p>
       )}
     </div>
   );
