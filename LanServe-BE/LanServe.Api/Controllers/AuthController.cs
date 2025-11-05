@@ -45,14 +45,23 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest req)
     {
-        var user = await _users.ValidateUserAsync(req.Email, req.Password);
-        if (user is null)
-            return Unauthorized(new { message = "Invalid credentials" });
+        try
+        {
+            var user = await _users.ValidateUserAsync(req.Email, req.Password);
+            if (user is null)
+                return Unauthorized(new { message = "Invalid credentials" });
 
-        // ✅ Gọi GenerateToken với RememberMe
-        var (token, exp) = _jwt.GenerateToken(user.Id, user.Email, user.Role, req.RememberMe);
+            // ✅ Gọi GenerateToken với RememberMe
+            var (token, exp) = _jwt.GenerateToken(user.Id, user.Email, user.Role, req.RememberMe);
 
-        return Ok(new { accessToken = token, expiresIn = exp });
+            return Ok(new { accessToken = token, expiresIn = exp });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ [AuthController.Login] Error: {ex.Message}");
+            Console.WriteLine($"❌ [AuthController.Login] StackTrace: {ex.StackTrace}");
+            return StatusCode(500, new { message = "Login failed", error = ex.Message });
+        }
     }
 
     [AllowAnonymous]

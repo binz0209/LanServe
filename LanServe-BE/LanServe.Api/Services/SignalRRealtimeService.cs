@@ -31,14 +31,17 @@ namespace LanServe.Api.Services
 
             try
             {
-                Console.WriteLine($"📡 Sending SignalR notification to {userId}: {JsonSerializer.Serialize(notification)}");
-
+                Console.WriteLine($"📡 [SignalRRealtimeService] Sending notification to userId={userId}, Type={notification.Type}, Id={notification.Id}");
+                
                 await _hubContext.Clients.User(userId)
                     .SendAsync("ReceiveNotification", notification);
+                
+                Console.WriteLine($"✅ [SignalRRealtimeService] Notification sent successfully to userId={userId}");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"❌ SignalR SendToUserAsync failed for {userId}: {ex.Message}");
+                Console.WriteLine($"❌ [SignalRRealtimeService] Failed to send notification to {userId}: {ex.Message}");
+                Console.WriteLine($"❌ [SignalRRealtimeService] Stack trace: {ex.StackTrace}");
             }
         }
     }

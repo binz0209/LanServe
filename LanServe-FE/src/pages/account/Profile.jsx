@@ -37,6 +37,13 @@ export default function Profile() {
     api
       .get(`/api/userprofiles/by-user/${targetUserId}`)
       .then(async (res) => {
+        // Nếu hồ sơ bị ẩn công khai và người xem KHÔNG phải chủ sở hữu → hiển thị thông báo ẩn
+        if (res.data && res.data.hidden) {
+          setProfile({ hidden: true, message: res.data.message });
+          setIsOwner(false);
+          return;
+        }
+
         setProfile(res.data);
         setIsOwner(!viewedUserId && res.data.userId === currentUserId);
 
@@ -59,7 +66,14 @@ export default function Profile() {
     }
   }, [isEditingProfile, isOwner]);
 
-  if (!profile) return <p className="p-4">Đang tải hồ sơ...</p>;
+    if (!profile) return <p className="p-4">Đang tải hồ sơ...</p>;
+    if (profile.hidden) {
+      return (
+        <div className="card p-6 text-center text-sm text-gray-600">
+          {profile.message || "Người dùng đã ẩn hồ sơ công khai"}
+        </div>
+      );
+    }
 
   const handleChange = (e) => {
     const { name, value } = e.target;

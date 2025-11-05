@@ -11,7 +11,12 @@ namespace LanServe.Api.Controllers;
 public class UserProfilesController : ControllerBase
 {
     private readonly IUserProfileService _svc;
-    public UserProfilesController(IUserProfileService svc) { _svc = svc; }
+    private readonly IUserSettingsService _settings;
+    public UserProfilesController(IUserProfileService svc, IUserSettingsService settings)
+    {
+        _svc = svc;
+        _settings = settings;
+    }
 
     [Authorize]
     [HttpGet("{id}")]
@@ -23,6 +28,20 @@ public class UserProfilesController : ControllerBase
     {
         var profile = await _svc.GetByUserIdAsync(userId);
         if (profile == null) return NotFound();
+
+        // Enforce privacy with default public=true
+        var settings = await _settings.GetByUserIdAsync(userId);
+        var isPublic = settings?.PrivacySettings?.PublicProfile ?? true;
+
+        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var isOwner = !string.IsNullOrEmpty(currentUserId) && currentUserId == userId;
+        var isAdmin = User.IsInRole("Admin");
+
+        if (!isPublic && !(isOwner || isAdmin))
+        {
+            return Ok(new { hidden = true, message = "Người dùng đã ẩn hồ sơ công khai" });
+        }
+
         return Ok(profile);
     }
         

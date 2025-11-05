@@ -10,11 +10,22 @@ export const useNotificationStore = create((set, get) => ({
   connected: false,
 
   // 🟢 Thêm thông báo (tránh trùng ID)
-  addNotification: (notif) =>
-    set((s) => {
-      if (s.items.some((n) => n.id === notif.id)) return s;
-      return { items: [notif, ...s.items] };
-    }),
+  addNotification: (notif) => {
+    console.log("➕ Adding notification:", notif);
+    return set((s) => {
+      if (!notif || !notif.id) {
+        console.warn("⚠️ Invalid notification (missing id):", notif);
+        return s;
+      }
+      if (s.items.some((n) => n.id === notif.id)) {
+        console.log("⚠️ Notification already exists:", notif.id);
+        return s;
+      }
+      const newItems = [notif, ...s.items];
+      console.log(`✅ Notification added. Total: ${newItems.length}`);
+      return { items: newItems };
+    });
+  },
 
   markRead: (id) =>
     set((s) => ({
@@ -86,7 +97,8 @@ export const useNotificationStore = create((set, get) => ({
         } catch (err) {
           console.warn("⚠️ Cannot parse payload:", err);
         }
-        get().addNotification(notif);
+        const added = get().addNotification(notif);
+        console.log("✅ Notification added to store:", notif.type, notif.id);
       });
 
       await connection.start();

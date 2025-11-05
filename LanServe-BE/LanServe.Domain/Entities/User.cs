@@ -4,6 +4,7 @@ using MongoDB.Bson.Serialization.Attributes;
 
 namespace LanServe.Domain.Entities;
 
+[BsonIgnoreExtraElements] // Bỏ qua các field không match trong MongoDB (như userSettings cũ)
 public class User
 {
     [BsonId, BsonRepresentation(BsonType.ObjectId)]

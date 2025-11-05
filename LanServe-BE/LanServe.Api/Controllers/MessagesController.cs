@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using MongoDB.Bson;
 using System.Security.Claims;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace LanServe.Api.Controllers;
 
@@ -15,7 +16,22 @@ namespace LanServe.Api.Controllers;
 public class MessagesController : ControllerBase
 {
     private readonly IMessageService _svc;
-    public MessagesController(IMessageService svc) { _svc = svc; }
+    private readonly INotificationService _notificationService;
+    private readonly IUserService _userService;
+    private readonly IUserSettingsService _userSettingsService;
+
+    public MessagesController(
+        IMessageService svc,
+        INotificationService notificationService,
+        IUserService userService,
+        IUserSettingsService userSettingsService)
+    {
+        _svc = svc;
+        _notificationService = notificationService;
+        _userService = userService;
+        _userSettingsService = userSettingsService;
+        Console.WriteLine("✅ [MessagesController] Controller initialized");
+    }
 
     private string? GetUserId()
         => User.FindFirst(ClaimTypes.NameIdentifier)?.Value
@@ -78,16 +94,29 @@ public class MessagesController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Send([FromBody] SendMessageRequest body)
     {
+        Console.WriteLine($"📨 [MessagesController.Send] Received request. ReceiverId: {body?.ReceiverId}, Text length: {body?.Text?.Length ?? 0}");
+        
         var senderId = GetUserId();
-        if (string.IsNullOrEmpty(senderId)) return Unauthorized();
+        if (string.IsNullOrEmpty(senderId))
+        {
+            Console.WriteLine("❌ [MessagesController.Send] Unauthorized - no senderId");
+            return Unauthorized();
+        }
+        
+        Console.WriteLine($"📨 [MessagesController.Send] SenderId: {senderId}");
 
-        if (string.IsNullOrWhiteSpace(body.ReceiverId) || string.IsNullOrWhiteSpace(body.Text))
+        if (body == null || string.IsNullOrWhiteSpace(body.ReceiverId) || string.IsNullOrWhiteSpace(body.Text))
+        {
+            Console.WriteLine("❌ [MessagesController.Send] BadRequest - missing receiverId or text");
             return BadRequest("receiverId và text là bắt buộc.");
+        }
 
         // Nếu FE truyền sẵn conversationKey thì dùng luôn; nếu không -> build chuẩn 3 phần
         var convKey = !string.IsNullOrWhiteSpace(body.ConversationKey)
             ? body.ConversationKey!
             : BuildKey(body.ProjectId, senderId, body.ReceiverId);
+
+        Console.WriteLine($"📨 [MessagesController.Send] ConversationKey: {convKey}");
 
         var msg = new Message
         {
@@ -100,7 +129,73 @@ public class MessagesController : ControllerBase
             ConversationKey = convKey
         };
 
+        Console.WriteLine($"📨 [MessagesController.Send] Saving message...");
         var saved = await _svc.SendAsync(msg);
+        Console.WriteLine($"✅ [MessagesController.Send] Message saved. Id: {saved.Id}");
+
+        // 🔔 Gửi notification "tin nhắn mới" cho người nhận
+        Console.WriteLine($"📩 [MessagesController.Send] Starting notification creation...");
+        try
+        {
+            // Kiểm tra settings của người nhận
+            var receiverSettings = await _userSettingsService.GetByUserIdAsync(body.ReceiverId);
+            if (receiverSettings?.NotificationSettings?.MessageNotifications == false)
+            {
+                Console.WriteLine($"⚠️ [MessagesController.Send] Receiver has message notifications disabled. Skipping notification.");
+                return Ok(saved);
+            }
+
+            Console.WriteLine($"📩 [MessagesController.Send] Creating notification for message. ReceiverId: {body.ReceiverId}, SenderId: {senderId}");
+            
+            var sender = await _userService.GetByIdAsync(senderId);
+            var senderName = sender?.FullName ?? "Người dùng";
+            Console.WriteLine($"📩 Sender found: {senderName}");
+
+            // Làm sạch text để hiển thị trong notification (loại bỏ HTML nếu có)
+            var notificationText = body.Text.Length > 100 
+                ? body.Text.Substring(0, 100) + "..." 
+                : body.Text;
+            
+            // Loại bỏ HTML tags cơ bản
+            notificationText = Regex.Replace(
+                notificationText, 
+                "<.*?>", 
+                string.Empty
+            );
+
+            var payload = JsonSerializer.Serialize(new
+            {
+                conversationKey = convKey,
+                messageId = saved.Id,
+                senderId = senderId,
+                receiverId = body.ReceiverId,
+                projectId = body.ProjectId,
+                action = "NewMessage"
+            });
+
+            var notification = new Notification
+            {
+                UserId = body.ReceiverId,
+                Type = "NewMessage",
+                Title = "Bạn có tin nhắn mới",
+                Message = $"{senderName}: {notificationText}",
+                Payload = payload,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            Console.WriteLine($"📩 Notification created. Type: {notification.Type}, UserId: {notification.UserId}");
+            
+            var createdNotification = await _notificationService.CreateAsync(notification);
+            Console.WriteLine($"✅ Message notification created successfully. Id: {createdNotification.Id}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ [MessagesController.Send] Failed to send message notification: {ex.Message}");
+            Console.WriteLine($"❌ [MessagesController.Send] Stack trace: {ex.StackTrace}");
+            Console.WriteLine($"❌ [MessagesController.Send] Inner exception: {ex.InnerException?.Message}");
+        }
+
+        Console.WriteLine($"📨 [MessagesController.Send] Returning response");
         return Ok(saved);
 
         // local helper: đảm bảo cùng format với Service/Repo

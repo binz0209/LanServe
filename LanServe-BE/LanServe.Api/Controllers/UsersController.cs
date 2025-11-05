@@ -11,7 +11,13 @@ namespace LanServe.Api.Controllers;
 public class UsersController : ControllerBase
 {
     private readonly IUserService _svc;
-    public UsersController(IUserService svc) { _svc = svc; }
+    private readonly IUserSettingsService _settingsSvc;
+    
+    public UsersController(IUserService svc, IUserSettingsService settingsSvc)
+    {
+        _svc = svc;
+        _settingsSvc = settingsSvc;
+    }
 
     [Authorize]
     [HttpGet("me")]
@@ -54,6 +60,99 @@ public class UsersController : ControllerBase
 
 
     public record ChangePasswordRequest(string OldPassword, string NewPassword);
+
+    public record UpdateNotificationSettingsRequest(bool EmailNotifications, bool MessageNotifications, bool NewProjectNotifications);
+
+    public record UpdatePrivacySettingsRequest(bool PublicProfile, bool ShowOnlineStatus);
+
+    public record UpdateUserSettingsRequest(
+        NotificationSettingsDto? NotificationSettings,
+        PrivacySettingsDto? PrivacySettings
+    );
+
+    public record NotificationSettingsDto(bool EmailNotifications, bool MessageNotifications, bool NewProjectNotifications);
+
+    public record PrivacySettingsDto(bool PublicProfile, bool ShowOnlineStatus);
+
+    [Authorize]
+    [HttpGet("me/settings")]
+    public async Task<IActionResult> GetUserSettings()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+        var settings = await _settingsSvc.EnsureAsync(userId);
+        return Ok(settings);
+    }
+
+    [Authorize]
+    [HttpPut("me/settings")]
+    public async Task<IActionResult> UpdateUserSettings([FromBody] UpdateUserSettingsRequest dto)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+        var settings = await _settingsSvc.EnsureAsync(userId);
+
+        // Update notification settings if provided
+        if (dto.NotificationSettings != null)
+        {
+            settings.NotificationSettings = new NotificationSettings
+            {
+                EmailNotifications = dto.NotificationSettings.EmailNotifications,
+                MessageNotifications = dto.NotificationSettings.MessageNotifications,
+                NewProjectNotifications = dto.NotificationSettings.NewProjectNotifications
+            };
+        }
+
+        // Update privacy settings if provided
+        if (dto.PrivacySettings != null)
+        {
+            settings.PrivacySettings = new PrivacySettings
+            {
+                PublicProfile = dto.PrivacySettings.PublicProfile,
+                ShowOnlineStatus = dto.PrivacySettings.ShowOnlineStatus
+            };
+        }
+
+        await _settingsSvc.UpdateAsync(settings.Id, settings);
+        return Ok(settings);
+    }
+
+    [Authorize]
+    [HttpPut("me/notification-settings")]
+    public async Task<IActionResult> UpdateNotificationSettings([FromBody] UpdateNotificationSettingsRequest dto)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+        var notificationSettings = new NotificationSettings
+        {
+            EmailNotifications = dto.EmailNotifications,
+            MessageNotifications = dto.MessageNotifications,
+            NewProjectNotifications = dto.NewProjectNotifications
+        };
+
+        var settings = await _settingsSvc.UpdateNotificationSettingsAsync(userId, notificationSettings);
+        return Ok(settings.NotificationSettings);
+    }
+
+    [Authorize]
+    [HttpPut("me/privacy-settings")]
+    public async Task<IActionResult> UpdatePrivacySettings([FromBody] UpdatePrivacySettingsRequest dto)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+        var privacySettings = new PrivacySettings
+        {
+            PublicProfile = dto.PublicProfile,
+            ShowOnlineStatus = dto.ShowOnlineStatus
+        };
+
+        var settings = await _settingsSvc.UpdatePrivacySettingsAsync(userId, privacySettings);
+        return Ok(settings.PrivacySettings);
+    }
 
     [Authorize]
     [HttpPost("change-password")]

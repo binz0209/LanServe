@@ -4,6 +4,7 @@ using LanServe.Api.Services;
 using LanServe.Application.Interfaces.Repositories;
 using LanServe.Application.Interfaces.Services;
 using LanServe.Application.Services;             // UserService, v.v.
+using LanServe.Domain.Entities;
 using LanServe.Infrastructure.Data;
 using LanServe.Infrastructure.Initialization;
 using LanServe.Infrastructure.Repositories;
@@ -26,9 +27,9 @@ Console.WriteLine($"MongoDb:ConnectionString = {(string.IsNullOrEmpty(config["Mo
 Console.WriteLine("=========================");
 
 builder.Services.AddSignalR();
-builder.Services.AddScoped<IRealtimeService, SignalRRealtimeService>();
 builder.Services.AddSingleton<IUserIdProvider, CustomUserIdProvider>();
-builder.Services.AddSingleton<IRealtimeService, RealtimeService>();
+// Chỉ đăng ký 1 IRealtimeService - SignalRRealtimeService có logging tốt hơn
+builder.Services.AddScoped<IRealtimeService, SignalRRealtimeService>();
 
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();   // 👈 bắt buộc để log ra stdout/stderr cho az webapp log tail
@@ -147,6 +148,8 @@ services.AddScoped<IWalletRepository>(sp =>
     new WalletRepository(sp.GetRequiredService<MongoDbContext>().Wallets));
 services.AddScoped<IWalletTransactionRepository>(sp =>
     new WalletTransactionRepository(sp.GetRequiredService<MongoDbContext>().WalletTransactions));
+services.AddScoped<IUserSettingsRepository>(sp =>
+    new UserSettingsRepository(sp.GetRequiredService<MongoDbContext>().UserSettings));
 
 // ========== Services (Application) ==========
 services.AddScoped<IUserService, UserService>();
@@ -164,6 +167,19 @@ services.AddScoped<IReviewService, ReviewService>();
 services.AddSingleton<IJwtTokenService, JwtTokenService>();
 services.AddScoped<IVnPayService, VnPayService>();
 builder.Services.AddScoped<IWalletService, WalletService>();
+services.AddScoped<IUserSettingsService, UserSettingsService>();
+
+// ========== Email Service ==========
+services.AddSingleton<LanServe.Infrastructure.Services.EmailService>(sp =>
+{
+    var smtpHost = config["Email:SmtpHost"] ?? "smtp.gmail.com";
+    var smtpPort = int.Parse(config["Email:SmtpPort"] ?? "587");
+    var fromEmail = config["Email:FromEmail"] ?? "";
+    var fromName = config["Email:FromName"] ?? "LanServe";
+    var password = config["Email:Password"] ?? "";
+    return new LanServe.Infrastructure.Services.EmailService(smtpHost, smtpPort, fromEmail, fromName, password);
+});
+services.AddScoped<IEmailService, EmailServiceAdapter>();
 
 var app = builder.Build();
 app.UseExceptionHandler(errorApp =>

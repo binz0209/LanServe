@@ -43,4 +43,5 @@ public class MongoDbContext
     // NEW
     public IMongoCollection<Wallet> Wallets => Col<Wallet>(_opt.Collections.Wallets);
     public IMongoCollection<WalletTransaction> WalletTransactions => Col<WalletTransaction>(_opt.Collections.WalletTransactions);
+    public IMongoCollection<UserSettings> UserSettings => Col<UserSettings>(_opt.Collections.UserSettings);
 }

@@ -437,11 +437,14 @@ export default function Messages() {
     if (!text.trim() || !activeUser || !currentUserId) return;
     try {
       const { projectId } = parseKey(activeConversationKey || "");
-      const res = await api.post("api/messages", {
+      const payload = {
         receiverId: activeUser.id || activeUser._id || activeUser.userId,
         text,
         projectId: projectId && projectId !== "null" ? projectId : null,
-      });
+      };
+      console.log("📤 [Messages.jsx] Sending message:", payload);
+      const res = await api.post("api/messages", payload);
+      console.log("✅ [Messages.jsx] Message sent successfully:", res.data);
       const saved =
         res.data ||
         normalizeMessage({
