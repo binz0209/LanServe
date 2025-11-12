@@ -9,6 +9,8 @@ export default function Profile() {
   const [allSkills, setAllSkills] = useState([]);
   const [selectedSkill, setSelectedSkill] = useState("");
   const [isOwner, setIsOwner] = useState(false);
+  const [user, setUser] = useState(null);
+  const [avatarUrl, setAvatarUrl] = useState("");
 
   const outletContext = useOutletContext?.() || {};
   const { isEditingProfile, setIsEditingProfile } = outletContext;
@@ -33,6 +35,15 @@ export default function Profile() {
     const targetUserId = viewedUserId || currentUserId;
 
     if (!targetUserId) return;
+
+    // Lấy thông tin User để có avatarUrl
+    api
+      .get(`/api/users/${targetUserId}`)
+      .then((res) => {
+        setUser(res.data);
+        setAvatarUrl(res.data?.avatarUrl || "");
+      })
+      .catch((err) => console.error("Get user error:", err));
 
     api
       .get(`/api/userprofiles/by-user/${targetUserId}`)
@@ -102,8 +113,14 @@ export default function Profile() {
   const handleSave = async () => {
     try {
       await api.put(`/api/userprofiles/${profile.id}`, profile);
+      // Cập nhật avatar nếu có
+      if (avatarUrl && user) {
+        await api.put(`/api/users/${user.id}`, { ...user, avatarUrl });
+      }
       alert("Cập nhật thành công!");
       setIsEditingProfile(false);
+      // Reload để hiển thị avatar mới
+      window.location.reload();
     } catch (err) {
       console.error("Update error:", err);
       alert("Cập nhật thất bại!");

@@ -31,20 +31,21 @@ const AdminLayout = () => {
     { name: "Người dùng", icon: Users, path: "/admin/users" },
     { name: "Dự án", icon: FolderKanban, path: "/admin/projects" },
     { name: "Đơn hàng", icon: FileText, path: "/admin/contracts" },
+    { name: "Banners", icon: FileText, path: "/admin/banners" },
     { name: "Thống kê", icon: BarChart3, path: "/admin/statistics" },
     { name: "Cài đặt", icon: Settings, path: "/admin/settings" },
   ];
 
   return (
-    <div className="flex h-screen bg-gray-100">
-      {/* Sidebar */}
+    <div className="flex h-screen bg-gray-100 overflow-hidden">
+      {/* Sidebar - Fixed */}
       <aside
         className={`bg-slate-800 text-white transition-all duration-300 ${
           isSidebarOpen ? "w-64" : "w-0"
-        } overflow-hidden flex flex-col`}
+        } flex flex-col fixed left-0 top-0 h-full z-40`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-slate-700">
+        <div className="flex items-center justify-between p-4 border-b border-slate-700 flex-shrink-0">
           <h1 className="text-xl font-bold">LanServe Admin</h1>
           <button
             onClick={() => setIsSidebarOpen(false)}
@@ -54,8 +55,8 @@ const AdminLayout = () => {
           </button>
         </div>
 
-        {/* Menu */}
-        <nav className="mt-4 flex-1 overflow-y-auto">
+        {/* Menu - Scrollable */}
+        <nav className="flex-1 overflow-y-auto">
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path;
@@ -75,10 +76,12 @@ const AdminLayout = () => {
         </nav>
       </aside>
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Top Bar */}
-        <header className="bg-white shadow-sm px-6 py-4 flex items-center justify-between">
+      {/* Main Content - Scrollable */}
+      <div className={`flex-1 flex flex-col overflow-hidden transition-all duration-300 ${
+        isSidebarOpen ? "ml-64" : "ml-0"
+      }`}>
+        {/* Top Bar - Fixed */}
+        <header className="bg-white shadow-sm px-6 py-4 flex items-center justify-between flex-shrink-0">
           <button
             onClick={() => setIsSidebarOpen(true)}
             className="lg:hidden hover:bg-gray-100 p-2 rounded"
@@ -95,8 +98,8 @@ const AdminLayout = () => {
           </div>
         </header>
 
-        {/* Page Content */}
-        <main className="flex-1 overflow-auto p-6">
+        {/* Page Content - Scrollable */}
+        <main className="flex-1 overflow-y-auto p-6">
           <Outlet />
         </main>
       </div>

@@ -26,5 +26,6 @@ public class MongoOptions
         public string Wallets { get; set; } = "wallets";
         public string WalletTransactions { get; set; } = "wallet_transactions";
         public string UserSettings { get; set; } = "user_settings";
+        public string Banners { get; set; } = "banners";
     }
 }

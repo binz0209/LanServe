@@ -13,4 +13,5 @@ public interface IProjectService
     Task<bool> UpdateAsync(string id, Project entity);
     Task<bool> DeleteAsync(string id);
     Task<Project?> UpdateStatusAsync(string id, string newStatus);
+    Task<IEnumerable<(Project Project, double Similarity)>> GetRecommendedProjectsAsync(string userId, int limit = 10);
 }

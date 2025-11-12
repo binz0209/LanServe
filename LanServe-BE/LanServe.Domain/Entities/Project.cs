@@ -24,6 +24,9 @@ public class Project
     [BsonElement("skillIds")]
     public List<string> SkillIds { get; set; } = new(); // ref Skill.Id
 
+    [BsonElement("skillEmbedding")]
+    public List<double>? SkillEmbedding { get; set; } // Vector embedding của skills (từ Gemini)
+
     [BsonElement("budgetType")]
     public string BudgetType { get; set; } = "Fixed"; // Fixed/Hourly
 
@@ -35,6 +38,9 @@ public class Project
 
     [BsonElement("status")]
     public string Status { get; set; } = "Open"; // Open/InProgress/Completed/Cancelled
+
+    [BsonElement("images")]
+    public List<string> Images { get; set; } = new(); // URLs từ Cloudinary
 
     [BsonElement("createdAt")]
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

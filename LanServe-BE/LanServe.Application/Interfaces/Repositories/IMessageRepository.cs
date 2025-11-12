@@ -7,6 +7,7 @@ public interface IMessageRepository
 {
     Task<Message> AddAsync(Message message);
     Task<bool> MarkAsReadAsync(string id);
+    Task<int> MarkAllAsReadInConversationAsync(string conversationKey, string userId);
 
     Task<List<Message>> GetByConversationAsync(string conversationKey);
     Task<List<Message>> GetByProjectAsync(string projectId);

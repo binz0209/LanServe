@@ -53,6 +53,7 @@ public class MongoInitializer : IMongoInitializer
         await EnsureCollection(_opt.Collections.Wallets);
         await EnsureCollection(_opt.Collections.WalletTransactions);
         await EnsureCollection(_opt.Collections.UserSettings);
+        await EnsureCollection(_opt.Collections.Banners);
 
         // ===== Indexes =====
 

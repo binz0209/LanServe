@@ -148,4 +148,28 @@ public class ProjectsController : ControllerBase
     [HttpGet("status/{status}")]
     public async Task<IActionResult> ByStatus(string status)
         => Ok(await _svc.GetByStatusAsync(status));
+
+    [Authorize]
+    [HttpGet("recommended")]
+    public async Task<IActionResult> GetRecommended([FromQuery] int limit = 10)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)
+            ?? User.FindFirst("sub")?.Value
+            ?? User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")?.Value;
+
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized();
+
+        var recommendations = await _svc.GetRecommendedProjectsAsync(userId, limit);
+        
+        // Format response với similarity score
+        // Lưu ý: r.Similarity đã là percentage (0-100) rồi, không cần nhân 100 nữa
+        var result = recommendations.Select(r => new
+        {
+            project = r.Project,
+            similarity = Math.Round(Math.Min(100.0, r.Similarity), 2) // Đảm bảo max 100%
+        });
+
+        return Ok(result);
+    }
 }
