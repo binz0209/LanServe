@@ -421,7 +421,14 @@ export default function Messages() {
       return;
     }
 
-    const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5070";
+    // Detect production: check if not localhost
+    const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+    // SignalR cần kết nối trực tiếp đến backend Azure (không qua Vercel proxy vì WebSocket không được proxy)
+    const API_BASE = import.meta.env.VITE_API_URL 
+      ? import.meta.env.VITE_API_URL.replace(/\/api\/?$/, "")
+      : isProduction
+        ? "https://lanserve-api-cgfghcd9bshbazbd.malaysiawest-01.azurewebsites.net"
+        : "http://localhost:5070";
     const connection = new signalR.HubConnectionBuilder()
       .withUrl(`${API_BASE}/hubs/message`, {
         accessTokenFactory: () => token,

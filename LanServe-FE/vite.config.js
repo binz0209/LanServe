@@ -28,7 +28,7 @@ export default defineConfig({
     port: 5174,
     proxy: {
       "/api": {
-        target: "http://localhost:5070",
+        target: "https://lanserve-api-cgfghcd9bshbazbd.malaysiawest-01.azurewebsites.net",
         changeOrigin: true,
         secure: false,
       },
