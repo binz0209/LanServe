@@ -108,6 +108,15 @@ dump/
 *.mongodump
 
 ############################################
+# Node.js / Frontend
+############################################
+node_modules/
+**/node_modules/
+LanServe-FE/node_modules/
+LanServe-FE/dist/
+LanServe-FE/.vite/
+
+############################################
 # Tạp nham
 ############################################
 *.bak
