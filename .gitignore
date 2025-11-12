@@ -108,6 +108,24 @@ dump/
 *.mongodump
 
 ############################################
+# Node.js / Frontend
+############################################
+node_modules/
+**/node_modules/
+LanServe-FE/node_modules/
+LanServe-FE/dist/
+LanServe-FE/.vite/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+.npm
+.eslintcache
+.parcel-cache
+
+############################################
 # Tạp nham
 ############################################
 *.bak
