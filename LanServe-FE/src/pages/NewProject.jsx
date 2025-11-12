@@ -3,6 +3,7 @@ import Input from "../components/ui/input";
 import Textarea from "../components/ui/textarea";
 import Select from "../components/ui/select";
 import Button from "../components/ui/button";
+import ImageUpload from "../components/ImageUpload";
 import api from "../lib/axios";
 import { jwtDecode } from "jwt-decode";
 import { useNavigate } from "react-router-dom";
@@ -18,6 +19,7 @@ export default function NewProject() {
   const [budgetAmount, setBudgetAmount] = useState(5000000);
   const [deadline, setDeadline] = useState("");
   const [skills, setSkills] = useState([]);
+  const [images, setImages] = useState([]);
 
   // options
   const [categories, setCategories] = useState([]);
@@ -36,13 +38,16 @@ export default function NewProject() {
       .replace(/^ObjectId\(["']?(.+?)["']?\)$/i, "$1");
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    const token =
+      localStorage.getItem("token") || sessionStorage.getItem("token");
     if (!token) return;
     try {
       const dec = jwtDecode(token);
       const id =
         dec.sub ||
-        dec["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"] ||
+        dec[
+          "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"
+        ] ||
         dec.userId ||
         dec.uid ||
         "";
@@ -57,8 +62,8 @@ export default function NewProject() {
     (async () => {
       try {
         const [catRes, skillRes] = await Promise.all([
-          api.get("/categories"),
-          api.get("/skills"),
+          api.get("/api/categories"),
+          api.get("/api/skills"),
         ]);
         setCategories(catRes.data ?? []);
         setSkillOptions(skillRes.data ?? []);
@@ -90,7 +95,7 @@ export default function NewProject() {
     if (!userId) return 0;
     try {
       // BE: GET /api/wallets/{userId} -> { balance }
-      const res = await api.get(`/wallets/${userId}`);
+      const res = await api.get(`/api/wallets/${userId}`);
       return Number(res.data?.balance || 0);
     } catch {
       return 0;
@@ -121,6 +126,7 @@ export default function NewProject() {
         budgetAmount: budgetAmount ? Number(budgetAmount) : 0,
         deadline: deadlineIso,
         status: "Open",
+        images: images, // Thêm images vào payload
       };
 
       // ① KIỂM TRA SỐ DƯ (không trừ tiền)
@@ -130,16 +136,16 @@ export default function NewProject() {
         if (balance < required) {
           alert(
             `Số dư ví không đủ để chi trả cho dự án này.\n` +
-            `Cần: ${required.toLocaleString("vi-VN")} VND\n` +
-            `Hiện có: ${balance.toLocaleString("vi-VN")} VND\n\n` +
-            `Vui lòng nạp thêm tiền trước khi đăng dự án.`
+              `Cần: ${required.toLocaleString("vi-VN")} VND\n` +
+              `Hiện có: ${balance.toLocaleString("vi-VN")} VND\n\n` +
+              `Vui lòng nạp thêm tiền trước khi đăng dự án.`
           );
           return; // dừng lại, không tạo project
         }
       }
 
       // ② TẠO PROJECT (không rút tiền ở bước này)
-      await api.post("/projects", payload);
+      await api.post("/api/projects", payload);
 
       alert("Đăng dự án thành công!");
       navigate("/projects");
@@ -279,9 +285,48 @@ export default function NewProject() {
           </div>
         </div>
 
+        {/* Hình ảnh dự án */}
+        <div className="card">
+          <div className="card-header p-5 font-semibold">Hình ảnh dự án</div>
+          <div className="card-body">
+            <ImageUpload
+              multiple={true}
+              folder="projects"
+              onUploadSuccess={(urls) => {
+                if (Array.isArray(urls)) {
+                  setImages(prev => [...prev, ...urls]);
+                }
+              }}
+            />
+            {images.length > 0 && (
+              <div className="mt-4 grid grid-cols-3 gap-3">
+                {images.map((url, index) => (
+                  <div key={index} className="relative group">
+                    <img
+                      src={url}
+                      alt={`Project ${index + 1}`}
+                      className="w-full h-32 object-cover rounded"
+                    />
+                    <button
+                      onClick={() => setImages(images.filter((_, i) => i !== index))}
+                      className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* Actions */}
         <div className="flex justify-end gap-3">
-          <Button variant="outline" onClick={() => navigate("/projects")} disabled={submitting}>
+          <Button
+            variant="outline"
+            onClick={() => navigate("/projects")}
+            disabled={submitting}
+          >
             Hủy bỏ
           </Button>
           <Button onClick={handleSubmit} disabled={submitting}>

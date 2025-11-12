@@ -9,6 +9,8 @@ export default function Profile() {
   const [allSkills, setAllSkills] = useState([]);
   const [selectedSkill, setSelectedSkill] = useState("");
   const [isOwner, setIsOwner] = useState(false);
+  const [user, setUser] = useState(null);
+  const [avatarUrl, setAvatarUrl] = useState("");
 
   const outletContext = useOutletContext?.() || {};
   const { isEditingProfile, setIsEditingProfile } = outletContext;
@@ -16,7 +18,8 @@ export default function Profile() {
   const { userId: viewedUserId } = useParams(); // 👈 nếu có userId => đang xem người khác
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    const token =
+      localStorage.getItem("token") || sessionStorage.getItem("token");
     let currentUserId = null;
 
     if (token) {
@@ -33,9 +36,25 @@ export default function Profile() {
 
     if (!targetUserId) return;
 
+    // Lấy thông tin User để có avatarUrl
+    api
+      .get(`/api/users/${targetUserId}`)
+      .then((res) => {
+        setUser(res.data);
+        setAvatarUrl(res.data?.avatarUrl || "");
+      })
+      .catch((err) => console.error("Get user error:", err));
+
     api
       .get(`/api/userprofiles/by-user/${targetUserId}`)
       .then(async (res) => {
+        // Nếu hồ sơ bị ẩn công khai và người xem KHÔNG phải chủ sở hữu → hiển thị thông báo ẩn
+        if (res.data && res.data.hidden) {
+          setProfile({ hidden: true, message: res.data.message });
+          setIsOwner(false);
+          return;
+        }
+
         setProfile(res.data);
         setIsOwner(!viewedUserId && res.data.userId === currentUserId);
 
@@ -58,7 +77,14 @@ export default function Profile() {
     }
   }, [isEditingProfile, isOwner]);
 
-  if (!profile) return <p className="p-4">Đang tải hồ sơ...</p>;
+    if (!profile) return <p className="p-4">Đang tải hồ sơ...</p>;
+    if (profile.hidden) {
+      return (
+        <div className="card p-6 text-center text-sm text-gray-600">
+          {profile.message || "Người dùng đã ẩn hồ sơ công khai"}
+        </div>
+      );
+    }
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -87,8 +113,14 @@ export default function Profile() {
   const handleSave = async () => {
     try {
       await api.put(`/api/userprofiles/${profile.id}`, profile);
+      // Cập nhật avatar nếu có
+      if (avatarUrl && user) {
+        await api.put(`/api/users/${user.id}`, { ...user, avatarUrl });
+      }
       alert("Cập nhật thành công!");
       setIsEditingProfile(false);
+      // Reload để hiển thị avatar mới
+      window.location.reload();
     } catch (err) {
       console.error("Update error:", err);
       alert("Cập nhật thất bại!");

@@ -14,6 +14,11 @@ public class Notification
 
     [BsonElement("type")]
     public string Type { get; set; } = string.Empty; // ProposalAccepted, NewMessage...
+    [BsonElement("title")]
+    public string? Title { get; set; } 
+
+    [BsonElement("message")]
+    public string? Message { get; set; }
 
     [BsonElement("payload")]
     public string? Payload { get; set; } // JSON nhẹ

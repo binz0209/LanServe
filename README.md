@@ -1,131 +1,117 @@
-# 🚀 LanServe - Nền tảng Freelance Việt Nam
+# LanServe - Nền tảng tìm việc và tuyển dụng Freelancer
 
-<div align="center">
-  <img src="https://img.shields.io/badge/React-18.2.0-blue?style=for-the-badge&logo=react" />
-  <img src="https://img.shields.io/badge/.NET-8.0-purple?style=for-the-badge&logo=dotnet" />
-  <img src="https://img.shields.io/badge/MongoDB-Atlas-green?style=for-the-badge&logo=mongodb" />
-  <img src="https://img.shields.io/badge/Vercel-Deployed-black?style=for-the-badge&logo=vercel" />
-</div>
+Chào mừng đến với LanServe, nơi kết nối các freelancer tài năng với những dự án hấp dẫn! Nền tảng của chúng tôi được thiết kế để giúp bạn dễ dàng tìm kiếm công việc, quản lý dự án, và xây dựng sự nghiệp freelance vững chắc.
 
-## 📋 Giới thiệu
+## Các tính năng nổi bật
 
-**LanServe** là nền tảng freelance hàng đầu tại Việt Nam, kết nối các freelancer tài năng với khách hàng có nhu cầu thuê ngoài. Chúng tôi cung cấp giải pháp toàn diện cho việc tìm kiếm và quản lý dự án freelance.
+### Dành cho Freelancer:
+- **Tìm kiếm dự án:** Duyệt qua hàng ngàn dự án phù hợp với kỹ năng của bạn.
+- **Quản lý hồ sơ:** Tạo và cập nhật hồ sơ chuyên nghiệp, thể hiện kinh nghiệm và portfolio.
+- **Gửi đề xuất:** Dễ dàng gửi đề xuất cho các dự án bạn quan tâm.
+- **Quản lý hợp đồng:** Theo dõi và quản lý các hợp đồng đã ký.
+- **Hệ thống thanh toán an toàn:** Nhận thanh toán nhanh chóng và bảo mật.
 
-### ✨ Tính năng chính
+### Dành cho Chủ dự án:
+- **Đăng dự án:** Tạo và đăng các dự án một cách nhanh chóng.
+- **Tìm kiếm Freelancer:** Duyệt qua hồ sơ của các freelancer để tìm người phù hợp nhất.
+- **Quản lý dự án:** Theo dõi tiến độ và giao tiếp với freelancer.
+- **Quản lý hợp đồng:** Tạo và quản lý các hợp đồng dịch vụ.
+- **Hệ thống thanh toán tiện lợi:** Thanh toán cho freelancer một cách dễ dàng.
 
-#### 👥 Cho Freelancer
-- **Hồ sơ chuyên nghiệp**: Tạo portfolio ấn tượng với skills, kinh nghiệm và dự án đã làm
-- **Tìm việc thông minh**: Hệ thống gợi ý dự án phù hợp với chuyên môn
-- **Quản lý dự án**: Theo dõi tiến độ, giao tiếp với khách hàng
-- **Thanh toán an toàn**: Tích hợp VNPay, ví điện tử bảo mật
-- **Đánh giá uy tín**: Hệ thống review và rating minh bạch
+### Tính năng chung:
+- **Xác thực người dùng:** Đăng ký, đăng nhập an toàn với JWT.
+- **Phân quyền:** Vai trò người dùng (User, Admin) với các quyền truy cập khác nhau.
+- **Giao diện thân thiện:** Thiết kế hiện đại, dễ sử dụng với Tailwind CSS.
 
-#### 🏢 Cho Khách hàng
-- **Đăng dự án miễn phí**: Mô tả chi tiết yêu cầu và ngân sách
-- **Tìm freelancer phù hợp**: Lọc theo skills, kinh nghiệm, giá cả
-- **Quản lý hợp đồng**: Theo dõi tiến độ, thanh toán theo milestone
-- **Bảo vệ quyền lợi**: Hệ thống escrow và dispute resolution
+## Công nghệ sử dụng
 
-#### 🔧 Cho Admin
-- **Dashboard thống kê**: Theo dõi tổng quan hệ thống
-- **Quản lý người dùng**: Xác thực, khóa/mở khóa tài khoản
-- **Quản lý dự án**: Kiểm duyệt, giải quyết tranh chấp
-- **Báo cáo doanh thu**: Thống kê chi tiết về giao dịch
+### Frontend:
+- **React 19:** Thư viện JavaScript để xây dựng giao diện người dùng.
+- **Vite:** Công cụ build nhanh cho các dự án frontend.
+- **React Router DOM:** Quản lý định tuyến trong ứng dụng SPA.
+- **Tailwind CSS:** Framework CSS utility-first để thiết kế nhanh.
+- **Recharts:** Thư viện biểu đồ để hiển thị dữ liệu thống kê.
+- **Lucide React:** Thư viện icon đẹp và dễ sử dụng.
+- **Axios:** Client HTTP để gọi API.
+- **jwt-decode:** Giải mã JWT trên client-side.
 
-## 🛠️ Công nghệ sử dụng
+### Backend:
+- **.NET 8 (C#):** Framework mạnh mẽ để xây dựng API.
+- **ASP.NET Core:** Xây dựng các dịch vụ web RESTful.
+- **MongoDB:** Cơ sở dữ liệu NoSQL linh hoạt.
+- **JWT (JSON Web Tokens):** Xác thực và ủy quyền.
+- **BCrypt.Net:** Mã hóa mật khẩu.
+- **VNPAY Integration:** Tích hợp cổng thanh toán VNPAY.
 
-### Frontend
-- **React 18** + **Vite** - Framework UI hiện đại
-- **Tailwind CSS** - Styling responsive
-- **React Router** - Điều hướng SPA
-- **Axios** - HTTP client
-- **Recharts** - Biểu đồ thống kê
+## Cấu trúc dự án
 
-### Backend
-- **.NET 8** - Framework backend mạnh mẽ
-- **ASP.NET Core** - Web API RESTful
-- **MongoDB** - Database NoSQL linh hoạt
-- **JWT** - Authentication & Authorization
-- **BCrypt** - Mã hóa mật khẩu
+```
+LanServe/
+├── LanServe-FE/          # Frontend React
+│   ├── src/
+│   ├── public/
+│   ├── package.json
+│   └── vite.config.js
+├── LanServe-BE/          # Backend .NET
+│   ├── LanServe.Api/
+│   ├── LanServe.Application/
+│   ├── LanServe.Domain/
+│   ├── LanServe.Infrastructure/
+│   ├── LanServe.Tests/
+│   └── LanServe.sln
+├── .github/workflows/
+├── .gitignore
+└── README.md
+```
 
-### DevOps & Deployment
-- **Vercel** - Deploy frontend
-- **Azure App Service** - Deploy backend
-- **GitHub Actions** - CI/CD pipeline
-- **Docker** - Containerization
+## Triển khai
 
-## 🚀 Cài đặt và chạy
+### Frontend:
+- **Vercel:** Triển khai tự động và nhanh chóng.
+- URL: `https://lanserve.vercel.app/`
 
-### Yêu cầu hệ thống
-- Node.js 18+
-- .NET 8 SDK
-- MongoDB Atlas account
+### Backend:
+- **Azure App Service:** Triển khai API backend.
+- URL: `https://lanserve-api-cgfghcd9bshbazbd.malaysiawest-01.azurewebsites.net/`
 
-### Frontend (LanServe-FE)
+## Truy cập Admin Dashboard
+
+- Admin Dashboard có sẵn tại: `https://lanserve.vercel.app/admin`
+- Yêu cầu tài khoản có vai trò "Admin".
+
+## Bắt đầu phát triển
+
+### Clone Repository:
+```bash
+git clone https://github.com/binz0209/LanServe.git
+cd LanServe
+```
+
+### Frontend (LanServe-FE):
 ```bash
 cd LanServe-FE
 npm install
 npm run dev
 ```
+- Frontend sẽ chạy tại: `http://localhost:5174`
 
-### Backend (LanServe-BE)
+### Backend (LanServe-BE):
 ```bash
 cd LanServe-BE
 dotnet restore
 dotnet run --project LanServe.Api
 ```
+- Backend sẽ chạy tại: `http://localhost:5070`
 
-## 📁 Cấu trúc dự án
+## Workflow Git
 
-```
-LanServe/
-├── LanServe-FE/                 # Frontend React
-│   ├── src/
-│   │   ├── components/          # UI Components
-│   │   ├── pages/              # Page Components
-│   │   ├── lib/                # Utilities & API
-│   │   └── stores/             # State Management
-│   ├── public/                 # Static assets
-│   └── vercel.json             # Vercel config
-│
-├── LanServe-BE/                 # Backend .NET
-│   ├── LanServe.Api/           # Web API Controllers
-│   ├── LanServe.Application/   # Business Logic
-│   ├── LanServe.Domain/        # Domain Models
-│   ├── LanServe.Infrastructure/ # Data Access
-│   └── LanServe.Tests/         # Unit Tests
-│
-└── README.md
-```
+- **`main`:** Nhánh production để deploy
+- **`dev`:** Nhánh development để code và test local
 
-## 🌐 Demo
+## Đóng góp
 
-- **Frontend**: [https://lanserve.vercel.app](https://lanserve.vercel.app)
-- **Backend API**: [https://lanserve-api.azurewebsites.net](https://lanserve-api.azurewebsites.net)
-
-## 👥 Đóng góp
-
-Chúng tôi hoan nghênh mọi đóng góp! Vui lòng:
-
-1. Fork repository
-2. Tạo feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit changes (`git commit -m '[YourName] Add AmazingFeature'`)
-4. Push to branch (`git push origin feature/AmazingFeature`)
-5. Tạo Pull Request
-
-## 📄 License
-
-Distributed under the MIT License. See `LICENSE` for more information.
-
-## 📞 Liên hệ
-
-- **Email**: support@lanserve.vn
-- **Website**: [https://lanserve.vn](https://lanserve.vn)
-- **GitHub**: [@binz0209](https://github.com/binz0209)
+Mọi đóng góp đều được chào đón! Vui lòng tạo issue hoặc pull request để đề xuất cải tiến.
 
 ---
 
-<div align="center">
-  <p>Được phát triển với ❤️ bởi team LanServe</p>
-  <p>© 2024 LanServe. All rights reserved.</p>
-</div>
+**LanServe** - Kết nối tài năng, kiến tạo thành công.

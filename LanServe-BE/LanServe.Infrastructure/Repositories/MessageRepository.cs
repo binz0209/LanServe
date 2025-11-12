@@ -29,6 +29,20 @@ public class MessageRepository : IMessageRepository
         return res.ModifiedCount > 0;
     }
 
+    public async Task<int> MarkAllAsReadInConversationAsync(string conversationKey, string userId)
+    {
+        // Mark tất cả tin nhắn chưa đọc trong conversation mà user là người nhận
+        var filter = Builders<Message>.Filter.And(
+            Builders<Message>.Filter.Eq(x => x.ConversationKey, conversationKey),
+            Builders<Message>.Filter.Eq(x => x.ReceiverId, userId),
+            Builders<Message>.Filter.Eq(x => x.IsRead, false)
+        );
+        
+        var update = Builders<Message>.Update.Set(x => x.IsRead, true);
+        var res = await _col.UpdateManyAsync(filter, update);
+        return (int)res.ModifiedCount;
+    }
+
     public async Task<List<Message>> GetByConversationAsync(string conversationKey)
     {
         var cur = await _col.Find(x => x.ConversationKey == conversationKey)

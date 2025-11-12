@@ -39,6 +39,8 @@ public class MessageService : IMessageService
     }
 
     public Task<bool> MarkAsReadAsync(string id) => _repo.MarkAsReadAsync(id);
+    public Task<int> MarkAllAsReadInConversationAsync(string conversationKey, string userId) 
+        => _repo.MarkAllAsReadInConversationAsync(conversationKey, userId);
 
     // ✅ CHUẨN: {projectId ?? "null"}:{min(sender,receiver)}:{max(sender,receiver)}
     private static string BuildConversationKey(string? projectId, string a, string b)

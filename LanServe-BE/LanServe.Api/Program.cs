@@ -1,13 +1,17 @@
 // ===== Usings =====
+using LanServe.Api.Hubs;
+using LanServe.Api.Services;
 using LanServe.Application.Interfaces.Repositories;
 using LanServe.Application.Interfaces.Services;
 using LanServe.Application.Services;             // UserService, v.v.
+using LanServe.Domain.Entities;
 using LanServe.Infrastructure.Data;
 using LanServe.Infrastructure.Initialization;
 using LanServe.Infrastructure.Repositories;
-using LanServe.Infrastructure.Services;          // JwtTokenService, v.v.
+using LanServe.Infrastructure.Services;          // JwtTokenService, CloudinaryImageUploadService
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Security.Claims;
@@ -21,6 +25,11 @@ Console.WriteLine("==== App starting... ====");
 Console.WriteLine($"MongoDb:DbName = {config["MongoDb:DbName"]}");
 Console.WriteLine($"MongoDb:ConnectionString = {(string.IsNullOrEmpty(config["MongoDb:ConnectionString"]) ? "NULL" : "FOUND")}");
 Console.WriteLine("=========================");
+
+builder.Services.AddSignalR();
+builder.Services.AddSingleton<IUserIdProvider, CustomUserIdProvider>();
+// Chỉ đăng ký 1 IRealtimeService - SignalRRealtimeService có logging tốt hơn
+builder.Services.AddScoped<IRealtimeService, SignalRRealtimeService>();
 
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();   // 👈 bắt buộc để log ra stdout/stderr cho az webapp log tail
@@ -70,6 +79,8 @@ services.AddCors(opt =>
             "http://127.0.0.1:5173",
             "https://localhost:5173",
             "https://127.0.0.1:5173",
+            "http://localhost:5174",
+            "http://127.0.0.1:5174",
             "https://localhost:5174",
             "https://127.0.0.1:5174",
             "https://lanserve.vercel.app",
@@ -137,6 +148,10 @@ services.AddScoped<IWalletRepository>(sp =>
     new WalletRepository(sp.GetRequiredService<MongoDbContext>().Wallets));
 services.AddScoped<IWalletTransactionRepository>(sp =>
     new WalletTransactionRepository(sp.GetRequiredService<MongoDbContext>().WalletTransactions));
+services.AddScoped<IUserSettingsRepository>(sp =>
+    new UserSettingsRepository(sp.GetRequiredService<MongoDbContext>().UserSettings));
+services.AddScoped<IBannerRepository>(sp =>
+    new BannerRepository(sp.GetRequiredService<MongoDbContext>().Banners));
 
 // ========== Services (Application) ==========
 services.AddScoped<IUserService, UserService>();
@@ -154,6 +169,28 @@ services.AddScoped<IReviewService, ReviewService>();
 services.AddSingleton<IJwtTokenService, JwtTokenService>();
 services.AddScoped<IVnPayService, VnPayService>();
 builder.Services.AddScoped<IWalletService, WalletService>();
+services.AddScoped<IBannerService, BannerService>();
+
+// ========== Cloudinary Image Upload ==========
+services.Configure<CloudinaryOptions>(config.GetSection("Cloudinary"));
+services.AddScoped<IImageUploadService, CloudinaryImageUploadService>();
+services.AddScoped<IUserSettingsService, UserSettingsService>();
+
+// ========== Gemini & Vector Services ==========
+services.AddHttpClient<IGeminiService, GeminiService>();
+services.AddScoped<IVectorService, VectorService>();
+
+// ========== Email Service ==========
+services.AddSingleton<LanServe.Infrastructure.Services.EmailService>(sp =>
+{
+    var smtpHost = config["Email:SmtpHost"] ?? "smtp.gmail.com";
+    var smtpPort = int.Parse(config["Email:SmtpPort"] ?? "587");
+    var fromEmail = config["Email:FromEmail"] ?? "";
+    var fromName = config["Email:FromName"] ?? "LanServe";
+    var password = config["Email:Password"] ?? "";
+    return new LanServe.Infrastructure.Services.EmailService(smtpHost, smtpPort, fromEmail, fromName, password);
+});
+services.AddScoped<IEmailService, EmailServiceAdapter>();
 
 var app = builder.Build();
 app.UseExceptionHandler(errorApp =>
@@ -224,5 +261,8 @@ if (!string.IsNullOrWhiteSpace(jwtKey))
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.MapHub<NotificationHub>("/hubs/notification");
+app.MapHub<MessageHub>("/hubs/message");
 
 app.Run();

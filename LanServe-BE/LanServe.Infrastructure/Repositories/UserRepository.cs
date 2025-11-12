@@ -1,5 +1,6 @@
 ﻿using LanServe.Application.Interfaces.Repositories;
 using LanServe.Domain.Entities;
+using MongoDB.Bson;
 using MongoDB.Driver;
 
 namespace LanServe.Infrastructure.Repositories;

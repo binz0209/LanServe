@@ -23,14 +23,17 @@ function SuccessBanner({ orderId, onClose }) {
 }
 
 export default function WalletPage() {
-  const token = localStorage.getItem("token");
+  const token =
+    localStorage.getItem("token") || sessionStorage.getItem("token");
   const userId = useMemo(() => {
     if (!token) return null;
     try {
       const d = jwtDecode(token);
       return (
         d.sub ||
-        d["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"] ||
+        d[
+          "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"
+        ] ||
         d.userId ||
         null
       );
@@ -39,14 +42,8 @@ export default function WalletPage() {
     }
   }, [token]);
 
-  const {
-    balance,
-    fetchBalance,
-    loading,
-    txns,
-    fetchTopups,
-    txLoading,
-  } = useWalletStore();
+  const { balance, fetchBalance, loading, txns, fetchTopups, txLoading } =
+    useWalletStore();
 
   const [open, setOpen] = useState(false);
   const [success, setSuccess] = useState(null);
@@ -55,7 +52,7 @@ export default function WalletPage() {
   useEffect(() => {
     if (userId) {
       fetchBalance(userId);
-      fetchTopups(userId, 20);  // ← gọi API topups
+      fetchTopups(userId, 20); // ← gọi API topups
     }
   }, [userId, fetchBalance, fetchTopups]);
 
@@ -91,7 +88,10 @@ export default function WalletPage() {
   return (
     <div className="container-ld py-6">
       {success && (
-        <SuccessBanner orderId={success.orderId} onClose={() => setSuccess(null)} />
+        <SuccessBanner
+          orderId={success.orderId}
+          onClose={() => setSuccess(null)}
+        />
       )}
 
       <h1 className="text-2xl font-bold mb-4">Ví của tôi</h1>
@@ -146,13 +146,19 @@ export default function WalletPage() {
             <tbody>
               {txLoading ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-6 text-center text-slate-500">
+                  <td
+                    colSpan={5}
+                    className="px-4 py-6 text-center text-slate-500"
+                  >
                     Đang tải giao dịch...
                   </td>
                 </tr>
               ) : sortedTxns.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-6 text-center text-slate-500">
+                  <td
+                    colSpan={5}
+                    className="px-4 py-6 text-center text-slate-500"
+                  >
                     Chưa có giao dịch
                   </td>
                 </tr>
@@ -176,7 +182,9 @@ export default function WalletPage() {
                     <td className="px-4 py-2 text-right font-medium">
                       {fmt(x.amount)}
                     </td>
-                    <td className="px-4 py-2 text-right">{fmt(x.balanceAfter)}</td>
+                    <td className="px-4 py-2 text-right">
+                      {fmt(x.balanceAfter)}
+                    </td>
                     <td className="px-4 py-2">{x.note || "-"}</td>
                   </tr>
                 ))

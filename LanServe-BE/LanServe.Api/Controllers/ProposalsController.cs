@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Bson;
 using System.Security.Claims;
+using System.Text.Json;
 
 namespace LanServe.Api.Controllers
 {
@@ -16,11 +17,15 @@ namespace LanServe.Api.Controllers
         private readonly IProposalService _svc;
         private readonly IContractService _contractService;
         private readonly IProjectService _projectService;
-        public ProposalsController(IProposalService svc, IContractService contractService, IProjectService projectService)
+        private readonly INotificationService _notificationService;
+        private readonly IRealtimeService _realtimeService;
+        public ProposalsController(IProposalService svc, IContractService contractService, IProjectService projectService, INotificationService notificationService, IRealtimeService realtimeService)
         {
             _svc = svc;
             _contractService = contractService;
             _projectService = projectService;
+            _notificationService = notificationService;
+            _realtimeService = realtimeService;
         }
 
 
@@ -55,6 +60,61 @@ namespace LanServe.Api.Controllers
             };
 
             var created = await _svc.CreateAsync(proposal);
+            // 🔔 Gửi notification realtime cho client (chủ dự án) và freelancer
+            try
+            {
+                var project = await _projectService.GetByIdAsync(dto.ProjectId);
+                if (project != null)
+                {
+                    var clientId = project.OwnerId;
+                    var freelancerId = dto.FreelancerId;
+
+                    var payload = JsonSerializer.Serialize(new
+                    {
+                        projectId = dto.ProjectId,
+                        proposalId = created.Id,
+                        freelancerId,
+                        clientId,
+                        projectTitle = project.Title,
+                        bidAmount = dto.BidAmount,
+                        action = "NewProposal"
+                    });
+
+                    // ✅ Gửi cho người đăng dự án (client)
+                    var notifClient = new Notification
+                    {
+                        UserId = clientId!,
+                        Type = "NewProposal",
+                        Title = "Đề xuất mới cho dự án của bạn",
+                        Message = $"Dự án '{project.Title}' vừa nhận được một đề xuất mới.",
+                        Payload = payload,
+                        CreatedAt = DateTime.UtcNow
+                    };
+
+                    await _notificationService.CreateAsync(notifClient);
+                    await _realtimeService.SendToUserAsync(clientId!, notifClient);
+
+                    // ✅ Gửi lại cho freelancer để xác nhận
+                    var notifFreelancer = new Notification
+                    {
+                        UserId = freelancerId!,
+                        Type = "ProposalSent",
+                        Title = "Đã gửi đề xuất thành công",
+                        Message = $"Bạn đã gửi đề xuất tới dự án '{project.Title}'.",
+                        Payload = payload,
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    await _notificationService.CreateAsync(notifFreelancer);
+                    await _realtimeService.SendToUserAsync(freelancerId!, notifFreelancer);
+
+                    Console.WriteLine($"📡 [SignalR] Sent: client={clientId}, freelancer={freelancerId}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Proposal Notify Error] {ex.Message}");
+            }
+
             return Ok(created);
         }
 
@@ -138,7 +198,50 @@ namespace LanServe.Api.Controllers
             object? acceptedMessage = null;
             try { acceptedMessage = await _svc.CreateAcceptedMessageAsync(proposal, contract); } catch { /* log */ }
 
-            // 7) Trả contractId để FE mở popup ngay
+            // 7) Gửi notification realtime cho cả hai bên
+            try
+            {
+                var project = await _projectService.GetByIdAsync(proposal.ProjectId);
+                var clientId = project?.OwnerId ?? currentUserId;
+                var freelancerId = proposal.FreelancerId;
+
+                // Tạo conversation key chuẩn FE Messages.jsx
+                var u1 = string.CompareOrdinal(clientId, freelancerId) <= 0 ? clientId : freelancerId;
+                var u2 = ReferenceEquals(u1, clientId) ? freelancerId : clientId;
+                var convKey = $"{proposal.ProjectId}:{u1}:{u2}";
+
+                var payload = JsonSerializer.Serialize(new
+                {
+                    projectId = proposal.ProjectId,
+                    proposalId = proposal.Id,
+                    contractId = contract.Id,
+                    conversationKey = convKey,
+                    action = "ProposalAccepted"
+                });
+
+                // gửi freelancer
+                await _notificationService.CreateAsync(new Notification
+                {
+                    UserId = freelancerId!,
+                    Type = "ProposalAccepted",
+                    Payload = payload
+                });
+           
+                // gửi client
+                await _notificationService.CreateAsync(new Notification
+                {
+                    UserId = clientId!,
+                    Type = "ProposalAccepted",
+                    Payload = payload
+                });
+            
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Notification Error] {ex.Message}");
+            }
+
+            // 8) Trả contractId để FE mở popup ngay
             return Ok(new { message = "Proposal accepted", contractId = contract.Id, contract, acceptedMessage });
         }
 

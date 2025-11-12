@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../lib/api";
 import { jwtDecode } from "jwt-decode";
+import Spinner from "../components/Spinner";
 
 export default function UserSearch() {
   const [users, setUsers] = useState([]);
@@ -10,9 +11,14 @@ export default function UserSearch() {
   const [search, setSearch] = useState("");
   const [selectedSkill, setSelectedSkill] = useState("");
   const [loading, setLoading] = useState(false);
+  const [displayedCount, setDisplayedCount] = useState(10);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const scrollContainerRef = useRef(null);
+  const ITEMS_PER_PAGE = 10;
   const navigate = useNavigate();
 
-  const token = localStorage.getItem("token");
+  const token =
+    localStorage.getItem("token") || sessionStorage.getItem("token");
   let currentUserId = null;
   if (token) {
     const decoded = jwtDecode(token);
@@ -50,14 +56,50 @@ export default function UserSearch() {
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "") || "";
 
-  const filteredUsers = users.filter((u) => {
-    const nameMatch = normalize(u.fullName).includes(normalize(search));
-    const userProfile = profiles.find((p) => p.userId === u.id);
-    if (selectedSkill) {
-      return nameMatch && userProfile?.skillIds?.includes(selectedSkill);
-    }
-    return nameMatch;
-  });
+  const filteredUsers = useMemo(() => {
+    return users.filter((u) => {
+      const nameMatch = normalize(u.fullName).includes(normalize(search));
+      const userProfile = profiles.find((p) => p.userId === u.id);
+      if (selectedSkill) {
+        return nameMatch && userProfile?.skillIds?.includes(selectedSkill);
+      }
+      return nameMatch;
+    });
+  }, [users, profiles, search, selectedSkill]);
+
+  // Reset displayed count when filter changes
+  useEffect(() => {
+    setDisplayedCount(ITEMS_PER_PAGE);
+  }, [search, selectedSkill]);
+
+  // Displayed users (for pagination)
+  const displayedUsers = useMemo(() => {
+    return filteredUsers.slice(0, displayedCount);
+  }, [filteredUsers, displayedCount]);
+
+  // Infinite scroll handler
+  useEffect(() => {
+    const handleScroll = () => {
+      if (isLoadingMore) return;
+      if (displayedCount >= filteredUsers.length) return;
+
+      const scrollTop = window.scrollY || document.documentElement.scrollTop;
+      const scrollHeight = document.documentElement.scrollHeight;
+      const clientHeight = window.innerHeight;
+
+      // Load more when 200px from bottom
+      if (scrollTop + clientHeight >= scrollHeight - 200) {
+        setIsLoadingMore(true);
+        setTimeout(() => {
+          setDisplayedCount(prev => Math.min(prev + ITEMS_PER_PAGE, filteredUsers.length));
+          setIsLoadingMore(false);
+        }, 300);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [isLoadingMore, displayedCount, filteredUsers.length]);
 
   return (
     <div className="container-ld py-10">
@@ -86,10 +128,13 @@ export default function UserSearch() {
       </div>
 
       {loading ? (
-        <p>Đang tải...</p>
+        <div className="flex items-center justify-center gap-3 py-8">
+          <Spinner />
+          <span>Đang tải...</span>
+        </div>
       ) : (
-        <div className="grid gap-4">
-          {filteredUsers.map((u) => (
+        <div className="grid gap-4" ref={scrollContainerRef}>
+          {displayedUsers.map((u) => (
             <div
               key={u.id}
               className="card p-4 flex items-center justify-between border"
@@ -129,11 +174,27 @@ export default function UserSearch() {
               </button>
             </div>
           ))}
+
+          {/* Loading more indicator */}
+          {isLoadingMore && (
+            <div className="flex items-center justify-center py-4">
+              <Spinner size="md" />
+            </div>
+          )}
+
+          {/* End of list indicator */}
+          {!loading && displayedCount >= filteredUsers.length && filteredUsers.length > 0 && (
+            <div className="text-center py-4 text-slate-500 text-sm">
+              Đã hiển thị tất cả {filteredUsers.length} người dùng
+            </div>
+          )}
         </div>
       )}
 
       {!loading && filteredUsers.length === 0 && (
-        <p className="text-slate-500 mt-4">Hãy Đăng nhập để xem danh sách người dùng.</p>
+        <p className="text-slate-500 mt-4">
+          Hãy Đăng nhập để xem danh sách người dùng.
+        </p>
       )}
     </div>
   );

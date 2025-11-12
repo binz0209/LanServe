@@ -19,7 +19,11 @@ const Dashboard = () => {
     totalUsers: 0,
     totalProjects: 0,
     totalContracts: 0,
-    totalRevenue: 0
+    totalRevenue: 0,
+    userChange: 0,
+    projectChange: 0,
+    contractChange: 0,
+    revenueChange: 0
   });
   const [revenueData, setRevenueData] = useState([]);
   const [projectData, setProjectData] = useState([]);
@@ -29,76 +33,173 @@ const Dashboard = () => {
     fetchDashboardData();
   }, []);
 
+  // Helper function to calculate percentage change
+  const calculateChange = (current, previous) => {
+    if (previous === 0) return current > 0 ? 100 : 0;
+    return ((current - previous) / previous) * 100;
+  };
+
+  // Helper function to format change percentage
+  const formatChange = (change) => {
+    const sign = change >= 0 ? '+' : '';
+    return `${sign}${change.toFixed(0)}%`;
+  };
+
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
       
+      const now = new Date();
+      const startOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+
       // Get all users
-      console.log('Fetching users...');
       const usersRes = await api.get('/api/users').catch(err => {
         console.error('Failed to fetch users:', err);
         return { data: [] };
       });
-      const totalUsers = usersRes.data?.length || 0;
-      console.log('Users fetched:', totalUsers);
+      const users = usersRes.data || [];
+      const totalUsers = users.length;
+      
+      // Calculate users this month vs last month
+      const usersThisMonth = users.filter(u => {
+        const createdAt = new Date(u.createdAt || u.CreatedAt);
+        return createdAt >= startOfThisMonth;
+      }).length;
+      const usersLastMonth = users.filter(u => {
+        const createdAt = new Date(u.createdAt || u.CreatedAt);
+        return createdAt >= startOfLastMonth && createdAt <= endOfLastMonth;
+      }).length;
+      const userChange = calculateChange(usersThisMonth, usersLastMonth);
 
       // Get all projects
-      console.log('Fetching projects...');
       const projectsRes = await api.get('/api/projects').catch(err => {
         console.error('Failed to fetch projects:', err);
         return { data: [] };
       });
-      const totalProjects = projectsRes.data?.length || 0;
-      console.log('Projects fetched:', totalProjects);
+      const projects = projectsRes.data || [];
+      const totalProjects = projects.length;
+      
+      // Calculate projects this month vs last month
+      const projectsThisMonth = projects.filter(p => {
+        const createdAt = new Date(p.createdAt || p.CreatedAt);
+        return createdAt >= startOfThisMonth;
+      }).length;
+      const projectsLastMonth = projects.filter(p => {
+        const createdAt = new Date(p.createdAt || p.CreatedAt);
+        return createdAt >= startOfLastMonth && createdAt <= endOfLastMonth;
+      }).length;
+      const projectChange = calculateChange(projectsThisMonth, projectsLastMonth);
 
       // Get all contracts
-      console.log('Fetching contracts...');
       const contractsRes = await api.get('/api/contracts').catch(err => {
         console.error('Failed to fetch contracts:', err);
         return { data: [] };
       });
-      const totalContracts = contractsRes.data?.length || 0;
-      console.log('Contracts fetched:', totalContracts);
+      const contracts = contractsRes.data || [];
+      const totalContracts = contracts.length;
+      
+      // Calculate contracts this month vs last month
+      const contractsThisMonth = contracts.filter(c => {
+        const createdAt = new Date(c.createdAt || c.CreatedAt);
+        return createdAt >= startOfThisMonth;
+      }).length;
+      const contractsLastMonth = contracts.filter(c => {
+        const createdAt = new Date(c.createdAt || c.CreatedAt);
+        return createdAt >= startOfLastMonth && createdAt <= endOfLastMonth;
+      }).length;
+      const contractChange = calculateChange(contractsThisMonth, contractsLastMonth);
 
-      // Get payments for revenue
-      console.log('Fetching payments...');
-      const paymentsRes = await api.get('/api/payments').catch(err => {
-        console.error('Failed to fetch payments:', err);
-        return { data: [] };
-      });
-      const payments = paymentsRes.data || [];
-      const totalRevenue = payments
-        .filter(p => p.status === 'Success')
-        .reduce((sum, p) => sum + (p.amount || 0), 0);
-      console.log('Payments fetched:', payments.length);
+      // Calculate revenue from completed contracts
+      const completedContracts = contracts.filter(c => 
+        (c.status || c.Status) === 'Completed' || (c.status || c.Status) === 'completed'
+      );
+      const totalRevenue = completedContracts.reduce((sum, c) => {
+        const amount = c.agreedAmount || c.AgreedAmount || 0;
+        return sum + (typeof amount === 'number' ? amount : parseFloat(amount) || 0);
+      }, 0);
+      
+      // Calculate revenue this month vs last month
+      const revenueThisMonth = completedContracts
+        .filter(c => {
+          const createdAt = new Date(c.createdAt || c.CreatedAt);
+          return createdAt >= startOfThisMonth;
+        })
+        .reduce((sum, c) => {
+          const amount = c.agreedAmount || c.AgreedAmount || 0;
+          return sum + (typeof amount === 'number' ? amount : parseFloat(amount) || 0);
+        }, 0);
+      
+      const revenueLastMonth = completedContracts
+        .filter(c => {
+          const createdAt = new Date(c.createdAt || c.CreatedAt);
+          return createdAt >= startOfLastMonth && createdAt <= endOfLastMonth;
+        })
+        .reduce((sum, c) => {
+          const amount = c.agreedAmount || c.AgreedAmount || 0;
+          return sum + (typeof amount === 'number' ? amount : parseFloat(amount) || 0);
+        }, 0);
+      const revenueChange = calculateChange(revenueThisMonth, revenueLastMonth);
 
       setStats({
         totalUsers,
         totalProjects,
         totalContracts,
-        totalRevenue
+        totalRevenue,
+        userChange,
+        projectChange,
+        contractChange,
+        revenueChange
       });
-      console.log('Stats set:', { totalUsers, totalProjects, totalContracts, totalRevenue });
 
-      // Mock data for charts (replace with actual data)
-      setRevenueData([
-        { month: 'Th 1', doanhThu: 12000000, chiPhi: 8000000 },
-        { month: 'Th 2', doanhThu: 19000000, chiPhi: 12000000 },
-        { month: 'Th 3', doanhThu: 15000000, chiPhi: 10000000 },
-        { month: 'Th 4', doanhThu: 22000000, chiPhi: 14000000 },
-        { month: 'Th 5', doanhThu: 28000000, chiPhi: 16000000 },
-        { month: 'Th 6', doanhThu: 35000000, chiPhi: 18000000 },
-      ]);
+      // Calculate chart data from actual data
+      // Revenue chart - last 6 months
+      const revenueChartData = [];
+      for (let i = 5; i >= 0; i--) {
+        const targetDate = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const monthStart = new Date(targetDate.getFullYear(), targetDate.getMonth(), 1);
+        const monthEnd = new Date(targetDate.getFullYear(), targetDate.getMonth() + 1, 0, 23, 59, 59);
+        
+        const monthRevenue = completedContracts
+          .filter(c => {
+            const createdAt = new Date(c.createdAt || c.CreatedAt);
+            return createdAt >= monthStart && createdAt <= monthEnd;
+          })
+          .reduce((sum, c) => {
+            const amount = c.agreedAmount || c.AgreedAmount || 0;
+            return sum + (typeof amount === 'number' ? amount : parseFloat(amount) || 0);
+          }, 0);
+        
+        revenueChartData.push({
+          month: `Th ${targetDate.getMonth() + 1}`,
+          doanhThu: monthRevenue,
+          chiPhi: monthRevenue * 0.6 // Estimate costs as 60% of revenue
+        });
+      }
+      setRevenueData(revenueChartData);
 
-      setProjectData([
-        { day: 'T2', projects: 45 },
-        { day: 'T3', projects: 52 },
-        { day: 'T4', projects: 48 },
-        { day: 'T5', projects: 61 },
-        { day: 'T6', projects: 55 },
-        { day: 'T7', projects: 78 },
-        { day: 'CN', projects: 82 },
-      ]);
+      // Projects chart - last 7 days
+      const projectChartData = [];
+      const dayNames = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+      for (let i = 6; i >= 0; i--) {
+        const dayStart = new Date(now);
+        dayStart.setDate(dayStart.getDate() - i);
+        dayStart.setHours(0, 0, 0, 0);
+        const dayEnd = new Date(dayStart);
+        dayEnd.setHours(23, 59, 59, 999);
+        
+        const dayProjects = projects.filter(p => {
+          const createdAt = new Date(p.createdAt || p.CreatedAt);
+          return createdAt >= dayStart && createdAt <= dayEnd;
+        }).length;
+        
+        projectChartData.push({
+          day: dayNames[dayStart.getDay()],
+          projects: dayProjects
+        });
+      }
+      setProjectData(projectChartData);
 
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
@@ -116,10 +217,42 @@ const Dashboard = () => {
   }
 
   const statsCards = [
-    { name: 'Tổng người dùng', value: stats.totalUsers, icon: Users, color: 'bg-blue-500', change: '+12%' },
-    { name: 'Dự án', value: stats.totalProjects, icon: FolderKanban, color: 'bg-green-500', change: '+8%' },
-    { name: 'Hợp đồng', value: stats.totalContracts, icon: FileText, color: 'bg-purple-500', change: '+15%' },
-    { name: 'Doanh thu', value: `${(stats.totalRevenue / 1000000).toFixed(1)}M`, icon: DollarSign, color: 'bg-orange-500', change: '+5%' },
+    { 
+      name: 'Tổng người dùng', 
+      value: stats.totalUsers, 
+      icon: Users, 
+      color: 'bg-blue-500', 
+      change: formatChange(stats.userChange),
+      changeColor: stats.userChange >= 0 ? 'text-green-600' : 'text-red-600'
+    },
+    { 
+      name: 'Dự án', 
+      value: stats.totalProjects, 
+      icon: FolderKanban, 
+      color: 'bg-green-500', 
+      change: formatChange(stats.projectChange),
+      changeColor: stats.projectChange >= 0 ? 'text-green-600' : 'text-red-600'
+    },
+    { 
+      name: 'Hợp đồng', 
+      value: stats.totalContracts, 
+      icon: FileText, 
+      color: 'bg-purple-500', 
+      change: formatChange(stats.contractChange),
+      changeColor: stats.contractChange >= 0 ? 'text-green-600' : 'text-red-600'
+    },
+    { 
+      name: 'Doanh thu', 
+      value: stats.totalRevenue >= 1000000 
+        ? `${(stats.totalRevenue / 1000000).toFixed(1)}M` 
+        : stats.totalRevenue >= 1000 
+        ? `${(stats.totalRevenue / 1000).toFixed(1)}K` 
+        : stats.totalRevenue.toFixed(0), 
+      icon: DollarSign, 
+      color: 'bg-orange-500', 
+      change: formatChange(stats.revenueChange),
+      changeColor: stats.revenueChange >= 0 ? 'text-green-600' : 'text-red-600'
+    },
   ];
 
   return (
@@ -139,7 +272,7 @@ const Dashboard = () => {
                 <div>
                   <p className="text-gray-600 text-sm">{stat.name}</p>
                   <p className="text-2xl font-bold text-gray-800 mt-1">{stat.value}</p>
-                  <p className="text-green-600 text-sm mt-1">{stat.change} so với tháng trước</p>
+                  <p className={`${stat.changeColor} text-sm mt-1`}>{stat.change} so với tháng trước</p>
                 </div>
                 <div className={`${stat.color} p-3 rounded-lg`}>
                   <Icon className="text-white" size={24} />

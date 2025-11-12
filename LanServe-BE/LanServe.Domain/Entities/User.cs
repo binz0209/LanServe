@@ -4,6 +4,7 @@ using MongoDB.Bson.Serialization.Attributes;
 
 namespace LanServe.Domain.Entities;
 
+[BsonIgnoreExtraElements] // Bỏ qua các field không match trong MongoDB (như userSettings cũ)
 public class User
 {
     [BsonId, BsonRepresentation(BsonType.ObjectId)]
@@ -20,6 +21,9 @@ public class User
 
     [BsonElement("role")]
     public string Role { get; set; } = "User"; // Admin/User
+
+    [BsonElement("avatarUrl")]
+    public string? AvatarUrl { get; set; }
 
     [BsonElement("createdAt")]
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

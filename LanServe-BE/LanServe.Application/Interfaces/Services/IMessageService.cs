@@ -12,6 +12,7 @@ public interface IMessageService
 
     Task<Message> SendAsync(Message dto);
     Task<bool> MarkAsReadAsync(string id);
+    Task<int> MarkAllAsReadInConversationAsync(string conversationKey, string userId);
     Task<Message> CreateProposalMessageAsync(
         string projectId,
         string proposalId,
