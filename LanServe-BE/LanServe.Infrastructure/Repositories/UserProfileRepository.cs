@@ -40,4 +40,11 @@ public class UserProfileRepository : IUserProfileRepository
     {
         return await _collection.Find(_ => true).ToListAsync();
     }
+
+    public async Task UpdateRatingAsync(string userId, double avgRating)
+    {
+        var filter = Builders<UserProfile>.Filter.Eq(u => u.UserId, userId);
+        var update = Builders<UserProfile>.Update.Set(u => u.AverageRating, avgRating);
+        await _collection.UpdateOneAsync(filter, update);
+    }
 }

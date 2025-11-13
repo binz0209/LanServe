@@ -7,10 +7,12 @@ namespace LanServe.Application.Services;
 public class ReviewService : IReviewService
 {
     private readonly IReviewRepository _repo;
+    private readonly IUserProfileRepository _userProfileRepo;
 
-    public ReviewService(IReviewRepository repo)
+    public ReviewService(IReviewRepository repo, IUserProfileRepository userProfileRepo)
     {
         _repo = repo;
+        _userProfileRepo = userProfileRepo;
     }
 
     public Task<Review?> GetByIdAsync(string id)
@@ -22,10 +24,26 @@ public class ReviewService : IReviewService
     public Task<IEnumerable<Review>> GetByUserAsync(string userId)
         => _repo.GetByUserAsync(userId);
 
-    public Task<Review> CreateAsync(Review entity)
+    public async Task<Review> CreateAsync(Review entity)
     {
         entity.CreatedAt = DateTime.UtcNow;
-        return _repo.InsertAsync(entity);
+
+        // 1️⃣ Lưu review mới
+        var created = await _repo.InsertAsync(entity);
+
+        // 2️⃣ Lấy tất cả review của người được đánh giá (Reviewee)
+        var reviews = await _repo.GetByUserAsync(entity.RevieweeId);
+
+        // 3️⃣ Tính điểm trung bình
+        if (reviews != null && reviews.Any())
+        {
+            var avg = reviews.Average(r => r.Rating);
+
+            // 4️⃣ Cập nhật rating trung bình vào UserProfile
+            await _userProfileRepo.UpdateRatingAsync(entity.RevieweeId, avg);
+        }
+
+        return created;
     }
 
     public Task<bool> DeleteAsync(string id)
