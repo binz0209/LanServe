@@ -4,9 +4,37 @@ import Button from "../../components/ui/button";
 import api from "../../lib/axios";
 import { toast } from "sonner";
 import { useSettingsStore } from "../../stores/settingsStore";
+import ImageUpload from "../../components/ImageUpload";
 
 export default function Settings() {
     const { notifications, privacy, updateNotificationSettings, updatePrivacySettings } = useSettingsStore();
+    const [user, setUser] = useState(null);
+    const [avatarUrl, setAvatarUrl] = useState("");
+
+    // Load user info và avatar
+    useEffect(() => {
+        const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+        if (!token) return;
+
+        api.get("/api/users/me")
+            .then((res) => {
+                setUser(res.data);
+                setAvatarUrl(res.data?.avatarUrl || "");
+            })
+            .catch((err) => console.error("Get user error:", err));
+    }, []);
+
+    const handleAvatarUpload = async (url) => {
+        try {
+            await api.put(`/api/users/me`, { avatarUrl: url });
+            setAvatarUrl(url);
+            setUser({ ...user, avatarUrl: url });
+            toast.success("Cập nhật avatar thành công!");
+        } catch (err) {
+            console.error("Update avatar error:", err);
+            toast.error("Cập nhật avatar thất bại!");
+        }
+    };
     
     // Load settings từ backend khi component mount
     useEffect(() => {
@@ -72,7 +100,32 @@ export default function Settings() {
     return (
         <div className="grid lg:grid-cols-3 gap-6">
             {/* Cột trái */}
-            <div className="lg:col-span-2 card p-5 space-y-6">
+            <div className="lg:col-span-2 space-y-6">
+                {/* Avatar */}
+                <div className="card p-5">
+                    <div className="font-semibold mb-3">Ảnh đại diện</div>
+                    <div className="flex items-center gap-4">
+                        {avatarUrl ? (
+                            <img
+                                src={avatarUrl}
+                                alt="Avatar"
+                                className="w-24 h-24 rounded-full object-cover"
+                            />
+                        ) : (
+                            <div className="w-24 h-24 rounded-full bg-slate-200 flex items-center justify-center text-2xl">
+                                👤
+                            </div>
+                        )}
+                        <div>
+                            <ImageUpload
+                                folder="avatars"
+                                onUploadSuccess={handleAvatarUpload}
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="card p-5 space-y-6">
                 {/* Thông báo */}
                 <div>
                     <div className="font-semibold">Thông báo</div>
@@ -206,6 +259,7 @@ export default function Settings() {
                     <Button variant="outline" className="mt-2" onClick={() => setOpen(true)}>
                         Đổi mật khẩu
                     </Button>
+                    </div>
                 </div>
             </div>
 

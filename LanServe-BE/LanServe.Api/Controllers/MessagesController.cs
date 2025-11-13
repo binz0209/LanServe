@@ -2,8 +2,10 @@
 using LanServe.Application.DTOs.Messages;
 using LanServe.Application.Interfaces.Services;
 using LanServe.Domain.Entities;
+using LanServe.Api.Hubs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using MongoDB.Bson;
 using System.Security.Claims;
 using System.Text.Json;
@@ -19,17 +21,20 @@ public class MessagesController : ControllerBase
     private readonly INotificationService _notificationService;
     private readonly IUserService _userService;
     private readonly IUserSettingsService _userSettingsService;
+    private readonly IHubContext<MessageHub> _messageHub;
 
     public MessagesController(
         IMessageService svc,
         INotificationService notificationService,
         IUserService userService,
-        IUserSettingsService userSettingsService)
+        IUserSettingsService userSettingsService,
+        IHubContext<MessageHub> messageHub)
     {
         _svc = svc;
         _notificationService = notificationService;
         _userService = userService;
         _userSettingsService = userSettingsService;
+        _messageHub = messageHub;
         Console.WriteLine("✅ [MessagesController] Controller initialized");
     }
 
@@ -133,6 +138,36 @@ public class MessagesController : ControllerBase
         var saved = await _svc.SendAsync(msg);
         Console.WriteLine($"✅ [MessagesController.Send] Message saved. Id: {saved.Id}");
 
+        // 📡 Gửi tin nhắn real-time qua SignalR cho cả người gửi và người nhận
+        try
+        {
+            var normalizedMessage = new
+            {
+                id = saved.Id,
+                conversationKey = convKey,
+                senderId = saved.SenderId,
+                receiverId = saved.ReceiverId,
+                projectId = saved.ProjectId,
+                text = saved.Text,
+                createdAt = saved.CreatedAt,
+                isRead = saved.IsRead
+            };
+
+            // Gửi cho người nhận
+            await _messageHub.Clients.User(body.ReceiverId)
+                .SendAsync("ReceiveMessage", normalizedMessage);
+            Console.WriteLine($"📡 [SignalR] Message sent to receiver: {body.ReceiverId}");
+
+            // Gửi cho người gửi (để sync real-time)
+            await _messageHub.Clients.User(senderId)
+                .SendAsync("ReceiveMessage", normalizedMessage);
+            Console.WriteLine($"📡 [SignalR] Message sent to sender: {senderId}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"⚠️ [SignalR] Failed to send real-time message: {ex.Message}");
+        }
+
         // 🔔 Gửi notification "tin nhắn mới" cho người nhận
         Console.WriteLine($"📩 [MessagesController.Send] Starting notification creation...");
         try
@@ -213,6 +248,18 @@ public class MessagesController : ControllerBase
     [HttpPost("{id}/read")]
     public async Task<IActionResult> MarkRead(string id)
         => Ok(await _svc.MarkAsReadAsync(id));
+
+    [Authorize]
+    [HttpPost("conversation/{conversationKey}/read-all")]
+    public async Task<IActionResult> MarkAllAsRead(string conversationKey)
+    {
+        var userId = GetUserId();
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized();
+
+        var count = await _svc.MarkAllAsReadInConversationAsync(conversationKey, userId);
+        return Ok(new { count });
+    }
 
     [Authorize(Roles = "User,Admin")]
     [HttpPost("proposal")]

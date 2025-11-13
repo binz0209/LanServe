@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import NotificationBell from "./components/NotificationBell";
@@ -40,6 +40,7 @@ import AdminProjects from "./pages/admin/Projects";
 import AdminContracts from "./pages/admin/Contracts";
 import AdminStatistics from "./pages/admin/Statistics";
 import AdminSettings from "./pages/admin/Settings";
+import AdminBanners from "./pages/admin/Banners";
 
 // ================== AUTH HELPERS ==================
 function PrivateRoute({ children }) {
@@ -66,7 +67,10 @@ function GuestOnly({ children }) {
 }
 
 // ================== MAIN APP ==================
-export default function App() {
+function AppContent() {
+  const location = useLocation();
+  const isAdminRoute = location.pathname.startsWith("/admin");
+  
   const addNotification = useNotificationStore((s) => s.addNotification);
   const fetchFromServer = useNotificationStore((s) => s.fetchFromServer);
   const initConnection = useNotificationStore((s) => s.initConnection);
@@ -182,6 +186,7 @@ export default function App() {
             <Route path="/admin/contracts" element={<AdminContracts />} />
             <Route path="/admin/statistics" element={<AdminStatistics />} />
             <Route path="/admin/settings" element={<AdminSettings />} />
+            <Route path="/admin/banners" element={<AdminBanners />} />
           </Route>
 
           <Route
@@ -191,8 +196,12 @@ export default function App() {
         </Routes>
       </main>
 
-      <Footer />
+      {!isAdminRoute && <Footer />}
       <Toaster richColors position="top-center" />
     </div>
   );
+}
+
+export default function App() {
+  return <AppContent />;
 }

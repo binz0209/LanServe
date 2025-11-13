@@ -1,11 +1,12 @@
 // src/pages/Projects.jsx
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import SearchBar from "../../components/SearchBar";
 import StatCard from "../../components/StatCard";
 import Progress from "../../components/ui/progress";
 import Button from "../../components/ui/button";
 import axios from "../../lib/axios";
 import { jwtDecode } from "jwt-decode";
+import Spinner from "../../components/Spinner";
 
 export default function Projects() {
   const [projects, setProjects] = useState([]);
@@ -25,12 +26,20 @@ export default function Projects() {
   const [filterCategory, setFilterCategory] = useState("");
   const [searchText, setSearchText] = useState("");
   const [sortOrder, setSortOrder] = useState("newest");
+  const [recommendedProjects, setRecommendedProjects] = useState([]);
+  const [loadingRecommended, setLoadingRecommended] = useState(false);
 
   const [viewing, setViewing] = useState(null);
 
   const [confirmJob, setConfirmJob] = useState(null);
 
   const [currentUserName, setCurrentUserName] = useState("");
+  
+  // Infinite scroll
+  const [displayedCount, setDisplayedCount] = useState(10);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const scrollContainerRef = useRef(null);
+  const ITEMS_PER_PAGE = 10;
   // ===== current user =====
   useEffect(() => {
     const token =
@@ -59,16 +68,54 @@ export default function Projects() {
     }
   }, []);
 
-  // ====== filter client-side theo search + category ======
+  // ====== filter client-side theo search + category + status ======
   const filteredProjects = useMemo(() => {
+    // Nếu sortOrder là "related", sử dụng recommendedProjects
+    if (sortOrder === "related") {
+      let list = [...recommendedProjects];
+
+      // Vẫn áp dụng filter
+      list = list.filter((p) => {
+        // Filter by status (activeFilter)
+        if (activeFilter !== "ALL") {
+          const status = p.status || p.Status || "";
+          if (status !== activeFilter) return false;
+        }
+
+        // Filter by category
+        if (filterCategory && p.categoryId !== filterCategory) return false;
+
+        // Filter by search text
+        if (searchText.trim()) {
+          const txt = removeDiacritics(searchText);
+          const title = removeDiacritics(p.title || "");
+          const desc = removeDiacritics(p.description || "");
+          if (!title.includes(txt) && !desc.includes(txt)) return false;
+        }
+        return true;
+      });
+
+      // Sort by similarity (cao nhất trước)
+      return list.sort((a, b) => (b.similarity || 0) - (a.similarity || 0));
+    }
+
+    // Sort bình thường
     const getTime = (p) => {
       const t = new Date(p.createdAt || p.updatedAt || 0).getTime();
       return Number.isFinite(t) ? t : 0;
     };
 
     const list = projects.filter((p) => {
+      // Filter by status (activeFilter)
+      if (activeFilter !== "ALL") {
+        const status = p.status || p.Status || "";
+        if (status !== activeFilter) return false;
+      }
+
+      // Filter by category
       if (filterCategory && p.categoryId !== filterCategory) return false;
 
+      // Filter by search text
       if (searchText.trim()) {
         const txt = removeDiacritics(searchText);
         const title = removeDiacritics(p.title || "");
@@ -82,7 +129,55 @@ export default function Projects() {
     return list.sort((a, b) =>
       sortOrder === "newest" ? getTime(b) - getTime(a) : getTime(a) - getTime(b)
     );
-  }, [projects, filterCategory, searchText, sortOrder]);
+  }, [projects, recommendedProjects, activeFilter, filterCategory, searchText, sortOrder]);
+
+  // Reset displayed count when filter changes
+  useEffect(() => {
+    setDisplayedCount(ITEMS_PER_PAGE);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeFilter, filterCategory, searchText, sortOrder]);
+
+  // Displayed projects (for pagination)
+  const displayedProjects = useMemo(() => {
+    return filteredProjects.slice(0, displayedCount);
+  }, [filteredProjects, displayedCount]);
+
+  // Infinite scroll handler
+  useEffect(() => {
+    const handleScroll = () => {
+      if (isLoadingMore) return;
+      if (displayedCount >= filteredProjects.length) return;
+
+      const scrollContainer = scrollContainerRef.current || window;
+      const scrollTop = scrollContainer === window 
+        ? window.scrollY 
+        : scrollContainer.scrollTop;
+      const scrollHeight = scrollContainer === window 
+        ? document.documentElement.scrollHeight 
+        : scrollContainer.scrollHeight;
+      const clientHeight = scrollContainer === window 
+        ? window.innerHeight 
+        : scrollContainer.clientHeight;
+
+      // Load more when 200px from bottom
+      if (scrollTop + clientHeight >= scrollHeight - 200) {
+        setIsLoadingMore(true);
+        setTimeout(() => {
+          setDisplayedCount(prev => Math.min(prev + ITEMS_PER_PAGE, filteredProjects.length));
+          setIsLoadingMore(false);
+        }, 300);
+      }
+    };
+
+    const container = scrollContainerRef.current || window;
+    container.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll);
+    
+    return () => {
+      container.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, [isLoadingMore, displayedCount, filteredProjects.length]);
 
   function removeDiacritics(str) {
     return str
@@ -111,19 +206,40 @@ export default function Projects() {
       .catch((err) => console.error("Load all projects for stats error:", err));
   }, []);
 
-  // ===== load theo filter =====
+  // ===== load all projects (filtering will be done client-side) =====
   useEffect(() => {
     setLoading(true);
-    let req;
-    if (activeFilter === "ALL") req = axios.get("api/projects");
-    else if (activeFilter === "Open") req = axios.get("api/projects/open");
-    else req = axios.get(`projects/status/${activeFilter}`);
-
-    req
+    axios
+      .get("api/projects")
       .then((res) => setProjects(res.data || []))
       .catch((err) => console.error("Load projects error:", err))
       .finally(() => setLoading(false));
-  }, [activeFilter]);
+  }, []);
+
+  // ===== load recommended projects when sortOrder is "related" =====
+  useEffect(() => {
+    if (sortOrder === "related" && currentUserId) {
+      setLoadingRecommended(true);
+      axios
+        .get("api/projects/recommended?limit=100")
+        .then((res) => {
+          const data = res.data || [];
+          setRecommendedProjects(
+            data.map((item) => ({
+              ...item.project,
+              similarity: item.similarity,
+            }))
+          );
+        })
+        .catch((err) => {
+          console.error("Load recommended projects error:", err);
+          setRecommendedProjects([]);
+        })
+        .finally(() => setLoadingRecommended(false));
+    } else {
+      setRecommendedProjects([]);
+    }
+  }, [sortOrder, currentUserId]);
 
   const catName = useCallback(
     (id) => categories.find((c) => c.id === id)?.name || "Khác",
@@ -376,6 +492,7 @@ export default function Projects() {
           >
             <option value="newest">Mới nhất</option>
             <option value="oldest">Cũ nhất</option>
+            <option value="related">Liên quan</option>
           </select>
         </div>
       </div>
@@ -426,12 +543,17 @@ export default function Projects() {
       </div>
 
       {/* List */}
+      <div ref={scrollContainerRef}>
       {loading ? (
-        <div className="card p-6">Đang tải dự án…</div>
+          <div className="card p-6 flex items-center justify-center gap-3">
+            <Spinner />
+            <span>Đang tải dự án…</span>
+          </div>
       ) : filteredProjects.length === 0 ? (
         <div className="card p-6">Không có dự án phù hợp.</div>
       ) : (
-        filteredProjects.map((p) => {
+          <>
+            {displayedProjects.map((p) => {
           const isOwner = p.ownerId === currentUserId;
           const shownSkills =
             Array.isArray(p.skillIds) && p.skillIds.length
@@ -441,8 +563,17 @@ export default function Projects() {
             <div key={p.id} className="card">
               <div className="card-body">
                 <div className="flex items-start justify-between">
-                  <div>
-                    <div className="text-lg font-semibold">{p.title}</div>
+                  <div className="flex-1">
+                    <div className="flex items-start justify-between gap-3 mb-2">
+                      <div className="text-lg font-semibold flex-1">{p.title}</div>
+                      {sortOrder === "related" && p.similarity !== undefined && (
+                        <div className="flex-shrink-0">
+                          <div className="px-3 py-1.5 bg-green-100 text-green-700 rounded-full text-sm font-semibold whitespace-nowrap">
+                            {p.similarity}% phù hợp
+                          </div>
+                        </div>
+                      )}
+                    </div>
                     <div className="mt-1 text-sm text-slate-500">
                       {p.description}
                     </div>
@@ -455,7 +586,7 @@ export default function Projects() {
                       ))}
                     </div>
                   </div>
-                  <div className="text-right min-w-[140px]">
+                  <div className="text-right min-w-[140px] ml-4">
                     <div className="text-xs uppercase tracking-wide text-slate-500">
                       Ngân sách
                     </div>
@@ -511,11 +642,23 @@ export default function Projects() {
               </div>
             </div>
           );
-        })
-      )}
+        })}
 
-      <div className="text-center">
-        <Button variant="outline">Xem thêm dự án</Button>
+        {/* Loading more indicator */}
+        {isLoadingMore && (
+          <div className="flex items-center justify-center py-4">
+            <Spinner size="md" />
+          </div>
+        )}
+
+        {/* End of list indicator */}
+        {!loading && displayedCount >= filteredProjects.length && filteredProjects.length > 0 && (
+          <div className="text-center py-4 text-slate-500 text-sm">
+            Đã hiển thị tất cả {filteredProjects.length} dự án
+          </div>
+        )}
+          </>
+        )}
       </div>
       {/* ===== Modal xác nhận nhận job ===== */}
       {confirmJob && (
@@ -840,7 +983,25 @@ export default function Projects() {
                 </button>
               </div>
 
-              <div className="p-5 space-y-4">
+              <div className="p-5 space-y-4 max-h-[70vh] overflow-y-auto">
+                {/* Hình ảnh dự án */}
+                {viewing.images && viewing.images.length > 0 && (
+                  <div className="mb-4">
+                    <div className="text-sm font-semibold mb-2">Hình ảnh dự án</div>
+                    <div className="grid grid-cols-2 gap-2">
+                      {viewing.images.map((imgUrl, index) => (
+                        <img
+                          key={index}
+                          src={imgUrl}
+                          alt={`Project image ${index + 1}`}
+                          className="w-full h-32 object-cover rounded cursor-pointer hover:opacity-90"
+                          onClick={() => window.open(imgUrl, '_blank')}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <div className="text-xl font-semibold">{viewing.title}</div>

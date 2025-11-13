@@ -33,14 +33,33 @@ public class UsersController : ControllerBase
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(string id) => Ok(await _svc.GetByIdAsync(id));
 
-    public record UpdateUserDto(string FullName, string Role);
+    public record UpdateUserDto(string? FullName, string? Role, string? AvatarUrl);
+    
+    [Authorize]
+    [HttpPut("me")]
+    public async Task<IActionResult> UpdateMe([FromBody] UpdateUserDto dto)
+    {
+        var id = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(id)) return Unauthorized();
+        
+        var u = await _svc.GetByIdAsync(id);
+        if (u is null) return NotFound();
+        
+        if (!string.IsNullOrEmpty(dto.FullName)) u.FullName = dto.FullName;
+        if (!string.IsNullOrEmpty(dto.AvatarUrl)) u.AvatarUrl = dto.AvatarUrl;
+        
+        return Ok(await _svc.UpdateAsync(id, u));
+    }
+
     [Authorize(Roles = "Admin")]
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(string id, [FromBody] UpdateUserDto dto)
     {
         var u = await _svc.GetByIdAsync(id);
         if (u is null) return NotFound();
-        u.FullName = dto.FullName; u.Role = dto.Role;
+        if (!string.IsNullOrEmpty(dto.FullName)) u.FullName = dto.FullName;
+        if (!string.IsNullOrEmpty(dto.Role)) u.Role = dto.Role;
+        if (!string.IsNullOrEmpty(dto.AvatarUrl)) u.AvatarUrl = dto.AvatarUrl;
         return Ok(await _svc.UpdateAsync(id, u));
     }
 

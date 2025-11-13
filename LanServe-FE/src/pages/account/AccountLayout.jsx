@@ -35,13 +35,14 @@ export default function AccountLayout() {
       })
       .catch((err) => console.error("Profile error:", err));
 
-    // 👇 nếu là hồ sơ của mình mới lấy fullName riêng
+    // 👇 Lấy thông tin User để có avatarUrl và fullName
     if (viewedUserId === currentUserId) {
       axios
         .get("api/users/me")
         .then((res) => {
           const fullName = res.data?.fullName ?? res.data?.name ?? "";
-          setProfile((prev) => ({ ...(prev || {}), fullName }));
+          const avatarUrl = res.data?.avatarUrl ?? "";
+          setProfile((prev) => ({ ...(prev || {}), fullName, avatarUrl }));
         })
         .catch((err) => console.error("User error:", err));
     } else {
@@ -50,7 +51,8 @@ export default function AccountLayout() {
         .get(`api/users/${viewedUserId}`)
         .then((res) => {
           const fullName = res.data?.fullName ?? res.data?.name ?? "";
-          setProfile((prev) => ({ ...(prev || {}), fullName }));
+          const avatarUrl = res.data?.avatarUrl ?? "";
+          setProfile((prev) => ({ ...(prev || {}), fullName, avatarUrl }));
         })
         .catch((err) => console.error("User (viewed) error:", err));
     }
@@ -89,6 +91,19 @@ export default function AccountLayout() {
         <div className="h-28 bg-gradient-to-r from-blue-600 to-orange-500" />
 
         <div className="p-5 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            {/* Avatar */}
+            {profile.avatarUrl ? (
+              <img
+                src={profile.avatarUrl}
+                alt="Avatar"
+                className="w-16 h-16 rounded-full object-cover border-2 border-white"
+              />
+            ) : (
+              <div className="w-16 h-16 rounded-full bg-slate-300 flex items-center justify-center text-2xl">
+                👤
+              </div>
+            )}
           <div>
             <div className="text-xl font-semibold">
               {profile.fullName && profile.fullName.trim()
@@ -104,6 +119,7 @@ export default function AccountLayout() {
                 : "-"}{" "}
               • ⭐ {rating.avg}/5{" "}
               {rating.count > 0 ? `(${rating.count} đánh giá)` : ""}
+              </div>
             </div>
           </div>
 

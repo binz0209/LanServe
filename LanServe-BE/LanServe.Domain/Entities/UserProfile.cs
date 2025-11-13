@@ -33,6 +33,9 @@ public class UserProfile
     [BsonElement("skills")]
     public List<string> SkillIds { get; set; } = new(); // ref Skill.Id
 
+    [BsonElement("skillEmbedding")]
+    public List<double>? SkillEmbedding { get; set; } // Vector embedding của skills (từ Gemini)
+
     [BsonElement("createdAt")]
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public double AverageRating { get; set; } = 0.0;
