@@ -4,6 +4,7 @@ using MongoDB.Bson.Serialization.Attributes;
 
 namespace LanServe.Domain.Entities;
 
+[BsonIgnoreExtraElements]
 public class UserProfile
 {
     [BsonId, BsonRepresentation(BsonType.ObjectId)]
@@ -38,5 +39,7 @@ public class UserProfile
 
     [BsonElement("createdAt")]
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    
+    [BsonElement("averageRating")]
     public double AverageRating { get; set; } = 0.0;
 }

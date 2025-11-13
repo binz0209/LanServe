@@ -6,6 +6,8 @@ import * as signalR from "@microsoft/signalr";
 import api from "../../lib/api";
 import EmptyState from "../../components/EmptyState";
 import Spinner from "../../components/Spinner";
+import ReviewModal from "../../components/ReviewModal";
+import { useNotificationStore } from "../../stores/notificationStore";
 
 // Helper: tách key thành projectId / receiverId / senderId
 const parseKey = (key = "") => {
@@ -140,6 +142,11 @@ export default function Messages() {
   // 🆕 Contract modal
   const [showContractModal, setShowContractModal] = useState(false);
   const [contractData, setContractData] = useState(null);
+  
+  // 🆕 Review modal
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewData, setReviewData] = useState(null);
+  const [hasReviewed, setHasReviewed] = useState(false);
 
   // 🆕 Cancel confirm (nếu bạn muốn confirm)
   const [confirmingCancel, setConfirmingCancel] = useState(false);
@@ -148,6 +155,9 @@ export default function Messages() {
   const containerRef = useRef(null);
   const [autoStick, setAutoStick] = useState(true);
   const messageHubRef = useRef(null);
+  
+  // Notification store để lắng nghe ContractCompleted notifications
+  const { items: notifications } = useNotificationStore();
   
   // Infinite scroll for conversations
   const [displayedConversationsCount, setDisplayedConversationsCount] = useState(10);
@@ -679,6 +689,59 @@ export default function Messages() {
       .catch((err) => console.error("Messages error:", err.message));
   }, [activeConversationKey, currentUserId, loadThread]);
 
+  // Xử lý notification ContractCompleted để hiển thị review modal
+  useEffect(() => {
+    if (!currentUserId) return;
+    
+    // Tìm notification ContractCompleted chưa đọc
+    const contractCompletedNotif = notifications.find(
+      (n) => n.type === "ContractCompleted" && !n.isRead && n.userId === currentUserId
+    );
+    
+    if (contractCompletedNotif && contractCompletedNotif.payloadObj) {
+      const payload = contractCompletedNotif.payloadObj;
+      const action = payload.Action;
+      
+      // Chỉ hiển thị review modal nếu action là review_freelancer hoặc review_client
+      if (action === "review_freelancer" || action === "review_client") {
+        const revieweeId = action === "review_freelancer" 
+          ? payload.FreelancerId 
+          : payload.ClientId;
+        
+        // Kiểm tra xem đã đánh giá project này chưa
+        const checkReview = async () => {
+          try {
+            const checkRes = await api.get(`/api/reviews/check/${payload.ProjectId}`);
+            if (checkRes.data?.hasReviewed) {
+              setHasReviewed(true);
+              // Không hiển thị modal nếu đã đánh giá
+              return;
+            }
+            setHasReviewed(false);
+            
+            // Đánh dấu notification đã đọc
+            if (contractCompletedNotif.id) {
+              api.post(`/api/notifications/${contractCompletedNotif.id}/read`).catch(console.error);
+            }
+            
+            // Hiển thị review modal
+            setReviewData({
+              contractId: payload.ContractId,
+              projectId: payload.ProjectId,
+              revieweeId: revieweeId,
+              revieweeName: action === "review_freelancer" ? "freelancer" : "chủ project",
+            });
+            setShowReviewModal(true);
+          } catch (err) {
+            console.error("Check review error:", err);
+          }
+        };
+        
+        checkReview();
+      }
+    }
+  }, [notifications, currentUserId]);
+
   // Displayed messages (lấy từ cuối mảng, messages mới nhất)
   const displayedMessages = useMemo(() => {
     if (allMessages.length === 0) return [];
@@ -770,14 +833,14 @@ export default function Messages() {
             return; // ❌ dừng lại
           }
 
-          // 4️⃣ Đủ tiền → trừ ví trước
+          // 4️⃣ Đủ tiền → trừ ví trước (giữ tiền trong escrow)
           const note = `Withdraw for accepted proposal #${proposalId}`;
           try {
             await api.post("/api/wallets/change-balance", {
               Delta: -Math.abs(amount),
               Note: note,
             });
-            console.log(`💸 Đã trừ ${amount.toLocaleString()}đ từ ví.`);
+            console.log(`💸 Đã trừ ${amount.toLocaleString()}đ từ ví (giữ trong escrow).`);
           } catch (err) {
             console.error("Withdraw failed:", err);
             alert("Không thể trừ tiền từ ví, vui lòng thử lại sau.");
@@ -1399,46 +1462,53 @@ export default function Messages() {
                           return;
                         }
 
-                        // 1) 💸 Cộng tiền cho freelancer
-                        await payoutToFreelancer(
-                          freelancerId,
-                          amount,
-                          contractId
+                        // 1) Gọi API complete contract (tự động trừ tiền client, cộng tiền freelancer, tạo notification)
+                        const completeRes = await api.post(
+                          `api/Contracts/${contractId}/complete`
                         );
 
-                        // 2) 📝 Cập nhật trạng thái hợp đồng thành Completed
-                        try {
-                          await api.put(`api/Contracts/${contractId}`, {
-                            ...contractData,
-                            status: "Completed",
-                          });
-                        } catch {
-                          await api.put(`api/Contracts/${contractId}`, {
-                            status: "Completed",
-                          });
-                        }
-
-                        // 3) Cập nhật UI và gửi tin nhắn
+                        // 2) Cập nhật UI
                         setContractData((prev) => ({
                           ...prev,
                           status: "Completed",
                         }));
-                        setMessages((prev) => [
-                          ...prev,
-                          {
-                            id: crypto.randomUUID(),
-                            senderId: "system",
-                            receiverId: currentUserId,
-                            text: `✅ Hợp đồng #${contractId} đã hoàn thành. Đã chuyển ${amount.toLocaleString()}đ cho freelancer.`,
-                            createdAt: new Date().toISOString(),
-                            isRead: true,
-                          },
-                        ]);
+
+                        // 3) Reload thread để cập nhật messages
+                        await loadThread(activeConversationKey, false);
 
                         alert(
-                          "Đã xác nhận hoàn thành và chuyển tiền cho freelancer."
+                          completeRes.data?.message ||
+                            "Đã xác nhận hoàn thành và chuyển tiền cho freelancer."
                         );
                         setShowContractModal(false);
+                        
+                        // 4) Kiểm tra xem đã đánh giá chưa trước khi hiển thị popup review
+                        try {
+                          const checkRes = await api.get(`/api/reviews/check/${contractData?.projectId}`);
+                          if (!checkRes.data?.hasReviewed) {
+                            setReviewData({
+                              contractId,
+                              projectId: contractData?.projectId,
+                              revieweeId: freelancerId,
+                              revieweeName: "freelancer",
+                            });
+                            setShowReviewModal(true);
+                            setHasReviewed(false);
+                          } else {
+                            setHasReviewed(true);
+                            alert("Bạn đã đánh giá project này rồi.");
+                          }
+                        } catch (err) {
+                          console.error("Check review error:", err);
+                          // Vẫn hiển thị modal nếu check fail (fallback)
+                          setReviewData({
+                            contractId,
+                            projectId: contractData?.projectId,
+                            revieweeId: freelancerId,
+                            revieweeName: "freelancer",
+                          });
+                          setShowReviewModal(true);
+                        }
                       } catch (err) {
                         console.error("Payout/Complete error:", err);
                         alert(
@@ -1467,6 +1537,25 @@ export default function Messages() {
             </div>
           </div>
         </div>
+      )}
+      
+      {/* Review Modal */}
+      {showReviewModal && reviewData && (
+        <ReviewModal
+          isOpen={showReviewModal}
+          onClose={() => {
+            setShowReviewModal(false);
+            setReviewData(null);
+          }}
+          contractId={reviewData.contractId}
+          projectId={reviewData.projectId}
+          revieweeId={reviewData.revieweeId}
+          revieweeName={reviewData.revieweeName}
+          onReviewSubmitted={() => {
+            // Refresh notifications sau khi submit review
+            // Có thể thêm logic refresh data ở đây nếu cần
+          }}
+        />
       )}
     </div>
   );

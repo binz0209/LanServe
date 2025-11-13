@@ -26,6 +26,13 @@ public class ReviewService : IReviewService
 
     public async Task<Review> CreateAsync(Review entity)
     {
+        // 0️⃣ Kiểm tra xem reviewer đã đánh giá project này chưa
+        var existingReview = await _repo.GetByReviewerAndProjectAsync(entity.ReviewerId, entity.ProjectId);
+        if (existingReview != null)
+        {
+            throw new InvalidOperationException("Bạn đã đánh giá project này rồi. Mỗi project chỉ có thể đánh giá 1 lần.");
+        }
+
         entity.CreatedAt = DateTime.UtcNow;
 
         // 1️⃣ Lưu review mới

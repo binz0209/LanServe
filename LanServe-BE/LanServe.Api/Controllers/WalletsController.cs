@@ -101,6 +101,23 @@ public class WalletsController : ControllerBase
 
         return Ok(txns);
     }
+
+    [Authorize]
+    [HttpGet("history")]
+    public async Task<IActionResult> GetHistory(
+        [FromQuery] string? userId,
+        [FromQuery] int take = 20,
+        [FromQuery] string sort = "desc",
+        CancellationToken ct = default)
+    {
+        var uid = string.IsNullOrWhiteSpace(userId) ? GetUserId() : userId;
+        if (string.IsNullOrWhiteSpace(uid)) return Unauthorized();
+
+        var asc = string.Equals(sort, "asc", StringComparison.OrdinalIgnoreCase);
+        var txns = await _svc.GetTransactionHistoryAsync(uid!, take, asc, ct);
+
+        return Ok(txns);
+    }
     // LanServe.Api/Controllers/WalletsController.cs
 
     [Authorize] // có thể siết quyền: chỉ client của contract hoặc Admin

@@ -26,6 +26,10 @@ public class ReviewRepository : IReviewRepository
                           .SortByDescending(x => x.CreatedAt)
                           .ToListAsync();
 
+    public async Task<Review?> GetByReviewerAndProjectAsync(string reviewerId, string projectId)
+        => await _collection.Find(x => x.ReviewerId == reviewerId && x.ProjectId == projectId)
+                            .FirstOrDefaultAsync();
+
     public async Task<Review> InsertAsync(Review entity)
     {
         await _collection.InsertOneAsync(entity);

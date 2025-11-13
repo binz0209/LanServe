@@ -11,4 +11,5 @@ public interface IContractService
     Task<Contract> CreateAsync(Contract entity);
     Task<bool> UpdateAsync(string id, Contract entity);
     Task<bool> DeleteAsync(string id);
+    Task<(bool Success, string Message)> CompleteContractAsync(string contractId, string userId);
 }

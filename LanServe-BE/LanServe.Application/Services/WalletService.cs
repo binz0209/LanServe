@@ -61,13 +61,26 @@ public class WalletService : IWalletService
         if (delta < 0 && w.Balance + delta < 0)
             return (false, new[] { "Insufficient balance" }, w);
 
+        var oldBalance = w.Balance;
         w.Balance += delta;
         w.UpdatedAt = DateTime.UtcNow;
 
         var ok = await _repo.UpdateAsync(w);
         if (!ok) return (false, new[] { "Failed to update wallet" }, w);
 
-        // Gợi ý: ghi log transaction ở đây nếu có WalletTransactionRepository.
+        // Ghi transaction record
+        var transactionType = delta > 0 ? "Deposit" : "Withdraw";
+        await _walletTxns.InsertAsync(new WalletTransaction
+        {
+            WalletId = w.Id,
+            UserId = userId,
+            Type = transactionType,
+            Amount = Math.Abs(delta),
+            BalanceAfter = w.Balance,
+            Note = note ?? $"Balance change: {transactionType}",
+            CreatedAt = DateTime.UtcNow
+        }, CancellationToken.None);
+
         return (true, Array.Empty<string>(), w);
     }
     public async Task<IEnumerable<WalletTransaction>> GetTopupHistoryAsync(
@@ -77,6 +90,16 @@ public class WalletService : IWalletService
             throw new ArgumentException("userId required");
 
         var list = await _walletTxns.GetTopupsByUserAsync(userId, take, asc, ct);
+        return list;
+    }
+
+    public async Task<IEnumerable<WalletTransaction>> GetTransactionHistoryAsync(
+        string userId, int take = 20, bool asc = false, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(userId))
+            throw new ArgumentException("userId required");
+
+        var list = await _walletTxns.GetHistoryByUserAsync(userId, take, asc, ct);
         return list;
     }
     public async Task<(bool ok, string code, long balance)> TryWithdrawAsync(

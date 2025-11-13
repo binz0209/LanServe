@@ -17,5 +17,6 @@ namespace LanServe.Application.DTOs
         public List<string> Languages { get; set; } = new();
         public List<string> Certifications { get; set; } = new();
         public List<string> Skills { get; set; } = new();
+        public double AverageRating { get; set; } = 0.0;
     }
 }

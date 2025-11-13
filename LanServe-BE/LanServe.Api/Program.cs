@@ -8,7 +8,7 @@ using LanServe.Domain.Entities;
 using LanServe.Infrastructure.Data;
 using LanServe.Infrastructure.Initialization;
 using LanServe.Infrastructure.Repositories;
-using LanServe.Infrastructure.Services;          // JwtTokenService, CloudinaryImageUploadService
+using LanServe.Infrastructure.Services;          // JwtTokenService, v.v.
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.SignalR;
@@ -150,8 +150,6 @@ services.AddScoped<IWalletTransactionRepository>(sp =>
     new WalletTransactionRepository(sp.GetRequiredService<MongoDbContext>().WalletTransactions));
 services.AddScoped<IUserSettingsRepository>(sp =>
     new UserSettingsRepository(sp.GetRequiredService<MongoDbContext>().UserSettings));
-services.AddScoped<IBannerRepository>(sp =>
-    new BannerRepository(sp.GetRequiredService<MongoDbContext>().Banners));
 
 // ========== Services (Application) ==========
 services.AddScoped<IUserService, UserService>();
@@ -169,16 +167,7 @@ services.AddScoped<IReviewService, ReviewService>();
 services.AddSingleton<IJwtTokenService, JwtTokenService>();
 services.AddScoped<IVnPayService, VnPayService>();
 builder.Services.AddScoped<IWalletService, WalletService>();
-services.AddScoped<IBannerService, BannerService>();
-
-// ========== Cloudinary Image Upload ==========
-services.Configure<CloudinaryOptions>(config.GetSection("Cloudinary"));
-services.AddScoped<IImageUploadService, CloudinaryImageUploadService>();
 services.AddScoped<IUserSettingsService, UserSettingsService>();
-
-// ========== Gemini & Vector Services ==========
-services.AddHttpClient<IGeminiService, GeminiService>();
-services.AddScoped<IVectorService, VectorService>();
 
 // ========== Email Service ==========
 services.AddSingleton<LanServe.Infrastructure.Services.EmailService>(sp =>
@@ -263,6 +252,5 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.MapHub<NotificationHub>("/hubs/notification");
-app.MapHub<MessageHub>("/hubs/message");
 
 app.Run();

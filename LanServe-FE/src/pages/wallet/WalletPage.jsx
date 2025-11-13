@@ -42,7 +42,7 @@ export default function WalletPage() {
     }
   }, [token]);
 
-  const { balance, fetchBalance, loading, txns, fetchTopups, txLoading } =
+  const { balance, fetchBalance, loading, txns, fetchTransactions, txLoading } =
     useWalletStore();
 
   const [open, setOpen] = useState(false);
@@ -52,9 +52,9 @@ export default function WalletPage() {
   useEffect(() => {
     if (userId) {
       fetchBalance(userId);
-      fetchTopups(userId, 20); // ← gọi API topups
+      fetchTransactions(userId, 50, sortDesc ? "desc" : "asc"); // ← gọi API history (tất cả loại)
     }
-  }, [userId, fetchBalance, fetchTopups]);
+  }, [userId, fetchBalance, fetchTransactions, sortDesc]);
 
   // đọc cờ từ PaymentSuccess đặt sẵn
   useEffect(() => {
@@ -172,15 +172,24 @@ export default function WalletPage() {
                           x.type === "TopUp"
                             ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
                             : x.type === "Withdraw"
-                            ? "bg-amber-50 text-amber-700 border border-amber-200"
+                            ? "bg-red-50 text-red-700 border border-red-200"
+                            : x.type === "Deposit"
+                            ? "bg-blue-50 text-blue-700 border border-blue-200"
                             : "bg-slate-50 text-slate-700 border border-slate-200"
                         }`}
                       >
                         {x.type || "-"}
                       </span>
                     </td>
-                    <td className="px-4 py-2 text-right font-medium">
-                      {fmt(x.amount)}
+                    <td className={`px-4 py-2 text-right font-medium ${
+                      x.type === "TopUp" || x.type === "Deposit" 
+                        ? "text-emerald-600" 
+                        : x.type === "Withdraw"
+                        ? "text-red-600"
+                        : ""
+                    }`}>
+                      {(x.type === "TopUp" || x.type === "Deposit") ? "+" : "-"}
+                      {fmt(Math.abs(x.amount || 0))}
                     </td>
                     <td className="px-4 py-2 text-right">
                       {fmt(x.balanceAfter)}

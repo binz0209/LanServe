@@ -24,6 +24,8 @@ public interface IWalletService
         string userId, long delta, string? note = null);
     Task<IEnumerable<WalletTransaction>> GetTopupHistoryAsync(
         string userId, int take = 20, bool asc = false, CancellationToken ct = default);
+    Task<IEnumerable<WalletTransaction>> GetTransactionHistoryAsync(
+        string userId, int take = 20, bool asc = false, CancellationToken ct = default);
     Task<(bool ok, string code, long balance)> TryWithdrawAsync(
         string userId, long amount, string? note = null, CancellationToken ct = default);
 }

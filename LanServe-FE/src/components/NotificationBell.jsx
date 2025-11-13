@@ -61,6 +61,15 @@ export default function NotificationBell() {
       } else {
         navigate(`/projects`);
       }
+    } else if (n.type === "ContractCompleted") {
+      // Điều hướng đến messages để xem contract và hiển thị review modal
+      const projectId = n.payloadObj?.ProjectId;
+      const contractId = n.payloadObj?.ContractId;
+      if (projectId) {
+        navigate(`/account/messages?projectId=${projectId}&contractId=${contractId}`);
+      } else {
+        navigate(`/account/messages`);
+      }
     } else {
       const key = n.payloadObj?.conversationKey;
       const projectId = n.payloadObj?.projectId;
@@ -129,6 +138,8 @@ export default function NotificationBell() {
               title = n.title || "Đã gửi đề xuất";
             } else if (n.type === "NewProject") {
               title = n.title || "Dự án mới";
+            } else if (n.type === "ContractCompleted") {
+              title = n.title || "Dự án đã hoàn thành";
             }
 
             return (

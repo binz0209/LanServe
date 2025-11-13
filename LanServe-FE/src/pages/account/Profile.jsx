@@ -210,6 +210,24 @@ export default function Profile() {
                 </div>
                 <div>Nơi ở: {profile.location ?? "Chưa cập nhật"}</div>
                 <div>Rate: {profile.hourlyRate ?? "-"} VND/h</div>
+                {/* Average Rating */}
+                {profile.averageRating !== undefined && profile.averageRating > 0 && (
+                  <div className="flex items-center gap-2">
+                    <span>Đánh giá:</span>
+                    <div className="flex items-center gap-1">
+                      <span className="text-yellow-400 text-lg">
+                        {"★".repeat(Math.round(profile.averageRating))}
+                        {"☆".repeat(5 - Math.round(profile.averageRating))}
+                      </span>
+                      <span className="font-semibold">
+                        {profile.averageRating.toFixed(1)}
+                      </span>
+                      <span className="text-gray-500 text-xs">
+                        ({profile.averageRating.toFixed(1)}/5.0)
+                      </span>
+                    </div>
+                  </div>
+                )}
               </>
             )}
           </div>

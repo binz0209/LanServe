@@ -2,6 +2,7 @@
 using LanServe.Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace LanServe.Api.Controllers;
 
@@ -34,4 +35,23 @@ public class ContractsController : ControllerBase
 
     [Authorize(Roles = "Admin")]
     [HttpGet] public async Task<IActionResult> GetAll() => Ok(await _svc.GetAllAsync());
+
+    [Authorize(Roles = "User,Admin")]
+    [HttpPost("{id}/complete")]
+    public async Task<IActionResult> CompleteContract(string id)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)
+            ?? User.FindFirst("sub")?.Value
+            ?? User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")?.Value;
+
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized("User ID not found in token");
+
+        var result = await _svc.CompleteContractAsync(id, userId);
+        
+        if (!result.Success)
+            return BadRequest(new { message = result.Message });
+
+        return Ok(new { message = result.Message });
+    }
 }
