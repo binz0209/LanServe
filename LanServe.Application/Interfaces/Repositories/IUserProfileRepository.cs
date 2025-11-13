@@ -10,4 +10,6 @@ public interface IUserProfileRepository
     Task<bool> UpdateAsync(UserProfile entity);
     Task<bool> DeleteAsync(string id);
     Task<IEnumerable<UserProfile>> GetAllAsync();
+    Task UpdateRatingAsync(string userId, double avgRating);
+
 }

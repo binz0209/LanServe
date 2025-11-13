@@ -35,4 +35,6 @@ public class UserProfile
 
     [BsonElement("createdAt")]
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public double AverageRating { get; set; } = 0.0;
+
 }

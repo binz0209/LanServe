@@ -12,6 +12,12 @@ public class UserProfileRepository : IUserProfileRepository
     {
         _collection = collection;
     }
+    public async Task UpdateRatingAsync(string userId, double avgRating)
+    {
+        var filter = Builders<UserProfile>.Filter.Eq(u => u.UserId, userId);
+        var update = Builders<UserProfile>.Update.Set(u => u.AverageRating, avgRating);
+        await _collection.UpdateOneAsync(filter, update);
+    }
 
     public async Task<UserProfile?> GetByIdAsync(string id)
         => await _collection.Find(x => x.Id == id).FirstOrDefaultAsync();

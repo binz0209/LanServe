@@ -25,6 +25,7 @@ public class MongoDbContext
         _opt.Collections ??= new MongoOptions.CollectionsSection();
     }
 
+
     private IMongoCollection<T> Col<T>(string name) => Database.GetCollection<T>(name);
 
     public IMongoCollection<User> Users => Col<User>(_opt.Collections.Users);
