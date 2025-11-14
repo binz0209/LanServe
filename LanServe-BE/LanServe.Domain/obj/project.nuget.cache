@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "dgSpecHash": "Az65LfLjUGk=",
+  "success": true,
+  "projectFilePath": "D:\\EXE\\LanServe-BE\\LanServe.Domain\\LanServe.Domain.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\binzd\\.nuget\\packages\\mongodb.bson\\3.5.0\\mongodb.bson.3.5.0.nupkg.sha512",
+    "C:\\Users\\binzd\\.nuget\\packages\\system.memory\\4.5.5\\system.memory.4.5.5.nupkg.sha512",
+    "C:\\Users\\binzd\\.nuget\\packages\\system.runtime.compilerservices.unsafe\\5.0.0\\system.runtime.compilerservices.unsafe.5.0.0.nupkg.sha512"
+  ],
+  "logs": []
+}

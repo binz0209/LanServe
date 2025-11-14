@@ -132,7 +132,19 @@ public class MongoInitializer : IMongoInitializer
             {
                 try
                 {
-                    var userId = userDoc["_id"].AsObjectId.ToString();
+                    if (!userDoc.TryGetValue("_id", out var idValue) || idValue == null || idValue.IsBsonNull)
+                    {
+                        skippedCount++;
+                        continue;
+                    }
+
+                    string userId;
+                    if (idValue.IsObjectId)
+                        userId = idValue.AsObjectId.ToString();
+                    else if (idValue.IsString)
+                        userId = idValue.AsString;
+                    else
+                        userId = idValue.ToString();
                     
                     // Kiểm tra xem đã có UserSettings trong collection riêng chưa
                     var existingSettings = await userSettingsCollection
@@ -145,8 +157,15 @@ public class MongoInitializer : IMongoInitializer
                         continue;
                     }
 
-                    var userSettingsDoc = userDoc["userSettings"]?.AsBsonDocument;
-                    var notificationSettingsDoc = userDoc["notificationSettings"]?.AsBsonDocument;
+                    userDoc.TryGetValue("userSettings", out var embeddedSettingsValue);
+                    userDoc.TryGetValue("notificationSettings", out var embeddedNotificationValue);
+
+                    var userSettingsDoc = embeddedSettingsValue != null && embeddedSettingsValue.IsBsonDocument
+                        ? embeddedSettingsValue.AsBsonDocument
+                        : null;
+                    var notificationSettingsDoc = embeddedNotificationValue != null && embeddedNotificationValue.IsBsonDocument
+                        ? embeddedNotificationValue.AsBsonDocument
+                        : null;
                     
                     BsonDocument newUserSettings;
 
@@ -220,7 +239,7 @@ public class MongoInitializer : IMongoInitializer
                     await userSettingsCollection.InsertOneAsync(newUserSettings, cancellationToken: ct);
 
                     // Xóa userSettings và notificationSettings khỏi user document
-                    var updateFilter = Builders<BsonDocument>.Filter.Eq("_id", userDoc["_id"]);
+                    var updateFilter = Builders<BsonDocument>.Filter.Eq("_id", idValue);
                     var update = Builders<BsonDocument>.Update
                         .Unset("userSettings")
                         .Unset("notificationSettings");
@@ -230,7 +249,17 @@ public class MongoInitializer : IMongoInitializer
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogWarning(ex, "Failed to migrate user {UserId}", userDoc["_id"]?.AsString ?? "unknown");
+                    string userIdForLog = "unknown";
+                    if (userDoc.TryGetValue("_id", out var idValueForLog) && idValueForLog != null && !idValueForLog.IsBsonNull)
+                    {
+                        if (idValueForLog.IsObjectId)
+                            userIdForLog = idValueForLog.AsObjectId.ToString();
+                        else if (idValueForLog.IsString)
+                            userIdForLog = idValueForLog.AsString;
+                        else
+                            userIdForLog = idValueForLog.ToString();
+                    }
+                    _logger.LogWarning(ex, "Failed to migrate user {UserId}", userIdForLog);
                 }
             }
 

@@ -1,0 +1,16 @@
+D:\EXE\LanServe-BE\LanServe.Application\bin\Release\net8.0\LanServe.Application.deps.json
+D:\EXE\LanServe-BE\LanServe.Application\bin\Release\net8.0\LanServe.Application.dll
+D:\EXE\LanServe-BE\LanServe.Application\bin\Release\net8.0\LanServe.Application.pdb
+D:\EXE\LanServe-BE\LanServe.Application\bin\Release\net8.0\LanServe.Domain.dll
+D:\EXE\LanServe-BE\LanServe.Application\bin\Release\net8.0\LanServe.Domain.pdb
+D:\EXE\LanServe-BE\LanServe.Application\obj\Release\net8.0\LanServe.Application.csproj.AssemblyReference.cache
+D:\EXE\LanServe-BE\LanServe.Application\obj\Release\net8.0\LanServe.Application.GeneratedMSBuildEditorConfig.editorconfig
+D:\EXE\LanServe-BE\LanServe.Application\obj\Release\net8.0\LanServe.Application.AssemblyInfoInputs.cache
+D:\EXE\LanServe-BE\LanServe.Application\obj\Release\net8.0\LanServe.Application.AssemblyInfo.cs
+D:\EXE\LanServe-BE\LanServe.Application\obj\Release\net8.0\LanServe.Application.csproj.CoreCompileInputs.cache
+D:\EXE\LanServe-BE\LanServe.Application\obj\Release\net8.0\LanServe.Application.sourcelink.json
+D:\EXE\LanServe-BE\LanServe.Application\obj\Release\net8.0\LanServe.0A7A4AC2.Up2Date
+D:\EXE\LanServe-BE\LanServe.Application\obj\Release\net8.0\LanServe.Application.dll
+D:\EXE\LanServe-BE\LanServe.Application\obj\Release\net8.0\refint\LanServe.Application.dll
+D:\EXE\LanServe-BE\LanServe.Application\obj\Release\net8.0\LanServe.Application.pdb
+D:\EXE\LanServe-BE\LanServe.Application\obj\Release\net8.0\ref\LanServe.Application.dll

@@ -1,0 +1,13 @@
+D:\EXE\LanServe-BE\LanServe.Domain\bin\Debug\net8.0\LanServe.Domain.deps.json
+D:\EXE\LanServe-BE\LanServe.Domain\bin\Debug\net8.0\LanServe.Domain.dll
+D:\EXE\LanServe-BE\LanServe.Domain\bin\Debug\net8.0\LanServe.Domain.pdb
+D:\EXE\LanServe-BE\LanServe.Domain\obj\Debug\net8.0\LanServe.Domain.csproj.AssemblyReference.cache
+D:\EXE\LanServe-BE\LanServe.Domain\obj\Debug\net8.0\LanServe.Domain.GeneratedMSBuildEditorConfig.editorconfig
+D:\EXE\LanServe-BE\LanServe.Domain\obj\Debug\net8.0\LanServe.Domain.AssemblyInfoInputs.cache
+D:\EXE\LanServe-BE\LanServe.Domain\obj\Debug\net8.0\LanServe.Domain.AssemblyInfo.cs
+D:\EXE\LanServe-BE\LanServe.Domain\obj\Debug\net8.0\LanServe.Domain.csproj.CoreCompileInputs.cache
+D:\EXE\LanServe-BE\LanServe.Domain\obj\Debug\net8.0\LanServe.Domain.sourcelink.json
+D:\EXE\LanServe-BE\LanServe.Domain\obj\Debug\net8.0\LanServe.Domain.dll
+D:\EXE\LanServe-BE\LanServe.Domain\obj\Debug\net8.0\refint\LanServe.Domain.dll
+D:\EXE\LanServe-BE\LanServe.Domain\obj\Debug\net8.0\LanServe.Domain.pdb
+D:\EXE\LanServe-BE\LanServe.Domain\obj\Debug\net8.0\ref\LanServe.Domain.dll

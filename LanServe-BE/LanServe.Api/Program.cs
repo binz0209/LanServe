@@ -169,6 +169,13 @@ services.AddScoped<IVnPayService, VnPayService>();
 builder.Services.AddScoped<IWalletService, WalletService>();
 services.AddScoped<IUserSettingsService, UserSettingsService>();
 
+// ========== HttpClient for GeminiService ==========
+services.AddHttpClient<LanServe.Infrastructure.Services.GeminiService>();
+
+// ========== Gemini & Vector Services ==========
+services.AddScoped<IGeminiService, LanServe.Infrastructure.Services.GeminiService>();
+services.AddScoped<IVectorService, LanServe.Infrastructure.Services.VectorService>();
+
 // ========== Email Service ==========
 services.AddSingleton<LanServe.Infrastructure.Services.EmailService>(sp =>
 {

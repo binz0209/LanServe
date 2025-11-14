@@ -142,14 +142,27 @@ GetConversationsForUserAsync(string userId)
 
         var docs = await pipeline.ToListAsync();
 
-        return docs.Select(d => (
-            ConversationKey: d.GetValue("conversationKey", "").ToString(),
-            PartnerId: d.GetValue("partnerId", "").ToString(),
-            LastMessage: d.GetValue("lastMessage", "").IsBsonNull ? "" : d["lastMessage"].ToString(),
-            LastAt: d.GetValue("lastAt", BsonNull.Value).IsBsonNull
-                ? DateTime.MinValue
-                : d["lastAt"].ToUniversalTime(),
-            UnreadCount: d.GetValue("unreadCount", 0).ToInt32()
+        return docs.Select(d =>
+        {
+            var conversationKeyValue = d.GetValue("conversationKey", BsonNull.Value);
+            var partnerIdValue = d.GetValue("partnerId", BsonNull.Value);
+            var lastMessageValue = d.GetValue("lastMessage", BsonNull.Value);
+            var lastAtValue = d.GetValue("lastAt", BsonNull.Value);
+            var unreadCountValue = d.GetValue("unreadCount", 0);
+
+            var conversationKey = conversationKeyValue.IsBsonNull ? string.Empty : conversationKeyValue.ToString() ?? string.Empty;
+            var partnerId = partnerIdValue.IsBsonNull ? string.Empty : partnerIdValue.ToString() ?? string.Empty;
+            var lastMessage = lastMessageValue.IsBsonNull ? string.Empty : lastMessageValue.ToString() ?? string.Empty;
+            var lastAt = lastAtValue.IsBsonNull ? DateTime.MinValue : lastAtValue.ToUniversalTime();
+            var unreadCount = unreadCountValue.ToInt32();
+
+            return (conversationKey, partnerId, lastMessage, lastAt, unreadCount);
+        }).Select(tuple => (
+            ConversationKey: tuple.conversationKey,
+            PartnerId: tuple.partnerId,
+            LastMessage: tuple.lastMessage,
+            LastAt: tuple.lastAt,
+            UnreadCount: tuple.unreadCount
         )).ToList();
     }
     public async Task<long> DeleteByProposalIdInHtmlAsync(string proposalId)

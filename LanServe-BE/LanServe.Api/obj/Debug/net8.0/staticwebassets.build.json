@@ -1,0 +1,11 @@
+{
+  "Version": 1,
+  "Hash": "PiH4bkA+E6wmBmPdWc36aNlN6DV633N+xJtlxrM+cAQ=",
+  "Source": "LanServe.Api",
+  "BasePath": "_content/LanServe.Api",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": []
+}

@@ -1,0 +1,121 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "D:\\EXE\\LanServe-BE\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{6F2A113B-5953-4BB6-A05B-EAA96DCF4479}|LanServe.Api\\LanServe.Api.csproj|d:\\exe\\lanserve-be\\lanserve.api\\controllers\\projectskillscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{6F2A113B-5953-4BB6-A05B-EAA96DCF4479}|LanServe.Api\\LanServe.Api.csproj|solutionrelative:lanserve.api\\controllers\\projectskillscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{6F2A113B-5953-4BB6-A05B-EAA96DCF4479}|LanServe.Api\\LanServe.Api.csproj|d:\\exe\\lanserve-be\\lanserve.api\\controllers\\projectscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{6F2A113B-5953-4BB6-A05B-EAA96DCF4479}|LanServe.Api\\LanServe.Api.csproj|solutionrelative:lanserve.api\\controllers\\projectscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{0CFA7E73-2636-4818-BB5E-E153BDFE6BDE}|LanServe.Infrastructure\\LanServe.Infrastructure.csproj|d:\\exe\\lanserve-be\\lanserve.infrastructure\\services\\geminiservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{0CFA7E73-2636-4818-BB5E-E153BDFE6BDE}|LanServe.Infrastructure\\LanServe.Infrastructure.csproj|solutionrelative:lanserve.infrastructure\\services\\geminiservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 3,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:128:0:{116d2292-e37d-41cd-a077-ebacac4c8cc4}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{1c4feeaa-4718-4aa9-859d-94ce25d182ba}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{aa2115a1-9712-457b-9047-dbb71ca2cdd2}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "ProjectSkillsController.cs",
+              "DocumentMoniker": "D:\\EXE\\LanServe-BE\\LanServe.Api\\Controllers\\ProjectSkillsController.cs",
+              "RelativeDocumentMoniker": "LanServe.Api\\Controllers\\ProjectSkillsController.cs",
+              "ToolTip": "D:\\EXE\\LanServe-BE\\LanServe.Api\\Controllers\\ProjectSkillsController.cs",
+              "RelativeToolTip": "LanServe.Api\\Controllers\\ProjectSkillsController.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABEAAABAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-11-13T07:24:48.594Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "ProjectsController.cs",
+              "DocumentMoniker": "D:\\EXE\\LanServe-BE\\LanServe.Api\\Controllers\\ProjectsController.cs",
+              "RelativeDocumentMoniker": "LanServe.Api\\Controllers\\ProjectsController.cs",
+              "ToolTip": "D:\\EXE\\LanServe-BE\\LanServe.Api\\Controllers\\ProjectsController.cs",
+              "RelativeToolTip": "LanServe.Api\\Controllers\\ProjectsController.cs",
+              "ViewState": "AgIAAA8AAAAAAAAAAAAEwB8AAAALAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-11-13T07:24:37.979Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "GeminiService.cs",
+              "DocumentMoniker": "D:\\EXE\\LanServe-BE\\LanServe.Infrastructure\\Services\\GeminiService.cs",
+              "RelativeDocumentMoniker": "LanServe.Infrastructure\\Services\\GeminiService.cs",
+              "ToolTip": "D:\\EXE\\LanServe-BE\\LanServe.Infrastructure\\Services\\GeminiService.cs",
+              "RelativeToolTip": "LanServe.Infrastructure\\Services\\GeminiService.cs",
+              "ViewState": "AgIAAI0AAAAAAAAAAAAAAKYAAAAJAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-11-13T07:23:41.267Z"
+            }
+          ]
+        },
+        {
+          "DockedWidth": 270,
+          "SelectedChildIndex": -1,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{3ae79031-e1bc-11d0-8f78-00a0c9110057}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{a80febb4-e7e0-4147-b476-21aaf2453969}"
+            }
+          ]
+        },
+        {
+          "DockedWidth": 122,
+          "SelectedChildIndex": -1,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{eefa5220-e298-11d0-8f78-00a0c9110057}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:1:0:{d212f56b-c48a-434c-a121-1c5d80b59b9f}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{0ad07096-bba9-4900-a651-0598d26f6d24}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{d78612c7-9962-4b83-95d9-268046dad23a}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{34e76e81-ee4a-11d0-ae2e-00a0c90fffc3}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
